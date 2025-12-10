@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Modelos iniciales para el sistema de torneos
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Tournament {
+  id        String   @id @default(cuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime?
+  status    String   @default("DRAFT") // DRAFT, ONGOING, COMPLETED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  teams     Team[]
+  matches   Match[]
+}
+
+model Team {
+  id           String     @id @default(cuid())
+  name         String
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  players      Player[]
+  homeMatches  Match[]    @relation("HomeTeam")
+  awayMatches  Match[]    @relation("AwayTeam")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  name      String
+  number    Int?
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Match {
+  id           String     @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  homeTeamId   String
+  homeTeam     Team       @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeamId   String
+  awayTeam     Team       @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  homeScore    Int?
+  awayScore    Int?
+  date         DateTime
+  status       String     @default("SCHEDULED") // SCHEDULED, PLAYED, CANCELLED
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}

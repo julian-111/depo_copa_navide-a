@@ -20,6 +20,21 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Database Configuration
+
+This project uses PostgreSQL with Prisma.
+
+1.  Copy `.env.example` to `.env`:
+    ```bash
+    cp .env.example .env
+    ```
+2.  Update `DATABASE_URL` in `.env` with your PostgreSQL connection string.
+    
+    Format: `postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public`
+
+    **Note for Development:**
+    If you are using a database with self-signed certificates (e.g., Aiven dev plans) and encounter SSL errors, the current configuration allows self-signed certificates in non-production environments. Ensure your `.env` does not contain conflicting `sslmode` parameters if you rely on this default behavior.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
