@@ -1,5 +1,5 @@
 import styles from './page.module.css';
-import Button from '../components/Button/Button';
+import Button from '../../components/Button/Button';
 
 export default function Home() {
   return (
@@ -13,8 +13,7 @@ export default function Home() {
             y no te pierdas ningún detalle del torneo más importante del año.
           </p>
           <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Button variant="primary" href="/tournament">Ver Resultados</Button>
-            <Button variant="outline" href="/teams">Equipos</Button>
+            <Button variant="outline" href="/equipos">Equipos</Button>
           </div>
         </div>
       </section>

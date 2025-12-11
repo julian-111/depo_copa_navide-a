@@ -19,7 +19,7 @@ const Navbar: React.FC = () => {
       <div className={styles.navLinks}>
         <Link href="/" className={styles.navItem}>Inicio</Link>
         <Link href="/tournament" className={styles.navItem}>Torneo</Link>
-        <Link href="/teams" className={styles.navItem}>Equipos</Link>
+        <Link href="/equipos" className={styles.navItem}>Equipos</Link>
       </div>
     </nav>
   );
