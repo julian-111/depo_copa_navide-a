@@ -1,19 +1,56 @@
 .button {
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  border: none;
-  font-weight: bold;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  position: relative;
   display: inline-flex;
+  justify-content: center;
   align-items: center;
-  justify-content: center; /* Center content */
-  gap: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.75rem 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  transition: all 0.4s ease;
+  cursor: pointer;
+  z-index: 1;
   font-family: 'Arial', sans-serif;
-  white-space: nowrap; /* Prevent text wrapping */
-  text-decoration: none; /* For link variants */
+  gap: 0.5rem;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: all 0.4s ease;
+  z-index: -1;
+}
+
+.button:hover::before {
+  left: 100%;
+}
+
+.button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  transform: translateY(-3px);
+  color: #fff;
+}
+
+.button:active {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 /* Full Width Modifier */
@@ -22,43 +59,40 @@
   display: flex;
 }
 
-/* Primary: Christmas Red */
+/* Primary: Christmas Red Glass */
 .primary {
-  background-color: #BB2528;
-  color: white;
-  border: 2px solid #BB2528;
+  background: rgba(187, 37, 40, 0.2); /* Red alpha */
+  border: 1px solid rgba(187, 37, 40, 0.4);
 }
 
 .primary:hover {
-  background-color: #9b1e20;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(187, 37, 40, 0.3);
+  background: rgba(187, 37, 40, 0.4);
+  border-color: rgba(187, 37, 40, 0.8);
 }
 
-/* Secondary: Gold */
+/* Secondary: Gold Glass */
 .secondary {
-  background-color: #F8B229;
-  color: #165B33; /* Dark Green text */
-  border: 2px solid #F8B229;
+  background: rgba(248, 178, 41, 0.2); /* Gold alpha */
+  border: 1px solid rgba(248, 178, 41, 0.4);
+  color: #F8B229;
 }
 
 .secondary:hover {
-  background-color: #e5a01d;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(248, 178, 41, 0.3);
+  background: rgba(248, 178, 41, 0.4);
+  border-color: rgba(248, 178, 41, 0.8);
+  color: #fff;
 }
 
-/* Outline: Green with border */
+/* Outline: Transparent with White/Green Border */
 .outline {
-  background-color: transparent;
-  color: #165B33;
-  border: 2px solid #165B33;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #fff;
 }
 
 .outline:hover {
-  background-color: #165B33;
-  color: white;
-  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #fff;
 }
 
 /* Disabled state */
