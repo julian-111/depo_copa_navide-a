@@ -1,4 +1,5 @@
 import styles from './page.module.css';
+import Button from '../components/Button/Button';
 
 export default function Home() {
   return (
@@ -11,6 +12,10 @@ export default function Home() {
             Vive la emoción del fútbol. Sigue a tu equipo favorito, consulta los resultados 
             y no te pierdas ningún detalle del torneo más importante del año.
           </p>
+          <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Button variant="primary" onClick={() => {}}>Ver Resultados</Button>
+            <Button variant="outline" onClick={() => {}}>Equipos</Button>
+          </div>
         </div>
       </section>
 

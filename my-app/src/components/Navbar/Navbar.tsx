@@ -1,22 +1,25 @@
 import React from 'react';
+import Link from 'next/link';
 import styles from './Navbar.module.css';
 
 const Navbar: React.FC = () => {
   return (
     <nav className={styles.navbar}>
-      <div className={styles.logoContainer} aria-label="Logo Placeholder">
+      <Link href="/" className={styles.logoContainer} aria-label="Volver al inicio">
         {/* Placeholder for logo */}
         <span role="img" aria-label="tree">🎄</span>
-      </div>
+      </Link>
       
-      <header>
-        <h1 className={styles.title}>Copa Navideña</h1>
-      </header>
+      <div className={styles.brand}>
+        <Link href="/" className={styles.title} style={{ textDecoration: 'none', color: 'inherit' }}>
+          Copa Navideña
+        </Link>
+      </div>
 
       <div className={styles.navLinks}>
-        <a href="#" className={styles.navItem}>Inicio</a>
-        <a href="#" className={styles.navItem}>Torneo</a>
-        <a href="#" className={styles.navItem}>Equipos</a>
+        <Link href="/" className={styles.navItem}>Inicio</Link>
+        <Link href="/tournament" className={styles.navItem}>Torneo</Link>
+        <Link href="/teams" className={styles.navItem}>Equipos</Link>
       </div>
     </nav>
   );
