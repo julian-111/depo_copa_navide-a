@@ -66,11 +66,20 @@
 @media (max-width: 768px) {
   .navbar {
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
+    padding: 1rem;
   }
   
   .navLinks {
     width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .actions {
+    width: 100%;
+    display: flex;
     justify-content: center;
   }
 }

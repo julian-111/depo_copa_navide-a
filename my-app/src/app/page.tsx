@@ -1,65 +1,91 @@
-import Image from "next/image";
+import styles from './page.module.css';
+
+// Mock data for standings
+const standingsData = [
+  { id: 1, team: 'Renos FC', played: 5, won: 4, drawn: 1, lost: 0, points: 13 },
+  { id: 2, team: 'Elfos United', played: 5, won: 3, drawn: 1, lost: 1, points: 10 },
+  { id: 3, team: 'Grinch City', played: 5, won: 2, drawn: 2, lost: 1, points: 8 },
+  { id: 4, team: 'Noel Stars', played: 5, won: 1, drawn: 1, lost: 3, points: 4 },
+  { id: 5, team: 'Snow Strikers', played: 5, won: 0, drawn: 0, lost: 5, points: 0 },
+];
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className={styles.container}>
+      {/* Hero Section */}
+      <section className={`${styles.section} ${styles.hero}`}>
+        <div className={styles.decoration} style={{ top: '10%', left: '5%' }}>❄</div>
+        <div className={styles.decoration} style={{ top: '20%', right: '10%' }}>⭐</div>
+        
+        <h1 className={styles.heroTitle}>¡Bienvenidos a la Copa Navideña!</h1>
+        <p className={styles.heroSubtitle}>
+          El torneo más festivo del año. Vive la pasión del fútbol con espíritu navideño.
+        </p>
+      </section>
+
+      {/* Standings Table Section */}
+      <section className={styles.section}>
+        <div className={styles.tableContainer}>
+          <h2 className={styles.sectionTitle}>
+            <span>🏆</span> Tabla de Posiciones
+          </h2>
+          
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th className={styles.rank}>#</th>
+                  <th>Equipo</th>
+                  <th>PJ</th>
+                  <th>PG</th>
+                  <th>PE</th>
+                  <th>PP</th>
+                  <th>Pts</th>
+                </tr>
+              </thead>
+              <tbody>
+                {standingsData.map((row, index) => (
+                  <tr key={row.id}>
+                    <td className={styles.rank}>{index + 1}</td>
+                    <td className={styles.teamName}>
+                      <span>⚽</span> {row.team}
+                    </td>
+                    <td>{row.played}</td>
+                    <td>{row.won}</td>
+                    <td>{row.drawn}</td>
+                    <td>{row.lost}</td>
+                    <td style={{ fontWeight: 'bold' }}>{row.points}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Tournament Phases Placeholder */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>
+          <span>📅</span> Fases del Torneo
+        </h2>
+        <div className={styles.phasesContainer}>
+          <div className={styles.phaseCard}>
+            <span className={styles.phaseIcon}>🥅</span>
+            <h3>Fase de Grupos</h3>
+            <p>En Progreso</p>
+          </div>
+          <div className={styles.phaseCard}>
+            <span className={styles.phaseIcon}>⚔️</span>
+            <h3>Eliminatorias</h3>
+            <p>Próximamente</p>
+          </div>
+          <div className={styles.phaseCard}>
+            <span className={styles.phaseIcon}>🏆</span>
+            <h3>Gran Final</h3>
+            <p>24 de Diciembre</p>
+          </div>
         </div>
-      </main>
+      </section>
     </div>
   );
 }

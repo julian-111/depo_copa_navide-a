@@ -8,9 +8,17 @@
   transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
+  justify-content: center; /* Center content */
   gap: 0.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   font-family: 'Arial', sans-serif;
+  white-space: nowrap; /* Prevent text wrapping */
+}
+
+/* Full Width Modifier */
+.fullWidth {
+  width: 100%;
+  display: flex;
 }
 
 /* Primary: Christmas Red */
@@ -58,4 +66,14 @@
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .button {
+    padding: 0.875rem 1.5rem; /* Slightly larger touch target */
+    font-size: 1.1rem; /* Better readability on mobile */
+    width: 100%; /* Default to full width on mobile for better UX */
+    display: flex;
+  }
 }
