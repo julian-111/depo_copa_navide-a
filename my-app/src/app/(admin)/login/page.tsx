@@ -37,7 +37,7 @@ export default function LoginPage() {
   return (
     <div className={styles.container}>
       <div className={styles.loginCard}>
-        <h1 className={styles.title}>Admin Panel</h1>
+        <h1 className={styles.title}>Iniciar Sesión</h1>
         
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.inputGroup}>
