@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Button from '../../../components/Button/Button';
 import styles from './page.module.css';
 
@@ -48,10 +49,10 @@ export default function DashboardPage() {
           <p className={styles.cardContent}>Administra los registros de equipos y jugadores.</p>
         </div>
         
-        <div className={styles.card}>
+        <Link href="/dashboard/resultados" className={styles.card}>
           <h2 className={styles.cardTitle}>Resultados</h2>
           <p className={styles.cardContent}>Actualiza marcadores y estadísticas de los partidos.</p>
-        </div>
+        </Link>
       </div>
     </div>
   );

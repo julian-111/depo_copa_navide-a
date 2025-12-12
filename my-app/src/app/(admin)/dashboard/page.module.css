@@ -36,12 +36,17 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 24px;
   padding: 2rem;
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
 }
 
 .card:hover {
   transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(248, 178, 41, 0.3);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
 }
 
 .cardTitle {
