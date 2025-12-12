@@ -118,10 +118,6 @@
   font-size: 1.25rem;
   letter-spacing: 2px;
 }
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
