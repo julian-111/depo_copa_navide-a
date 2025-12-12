@@ -39,16 +39,10 @@ export default function DashboardPage() {
       </header>
 
       <div className={styles.grid}>
-        <div className={styles.card}>
-          <h2 className={styles.cardTitle}>Torneos Activos</h2>
-          <p className={styles.cardContent}>Gestiona los torneos en curso y sus configuraciones.</p>
-        </div>
-        
-        <div className={styles.card}>
-          <h2 className={styles.cardTitle}>Equipos</h2>
-          <p className={styles.cardContent}>Administra los registros de equipos y jugadores.</p>
-        </div>
-        
+        <Link href="/dashboard/registro-equipo" className={styles.card}>
+          <h2 className={styles.cardTitle}>Registro de Equipo</h2>
+          <p className={styles.cardContent}>Inscribe nuevos equipos en el torneo.</p>
+        </Link>
         <Link href="/dashboard/resultados" className={styles.card}>
           <h2 className={styles.cardTitle}>Resultados</h2>
           <p className={styles.cardContent}>Actualiza marcadores y estadísticas de los partidos.</p>
