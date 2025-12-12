@@ -1,0 +1,273 @@
+.container {
+  padding: 2rem;
+  min-height: 100vh;
+  color: white;
+  font-family: 'Arial', sans-serif;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(to right, #F8B229, #fff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.glassPanel {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.matchControl {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 2rem;
+  align-items: center;
+  text-align: center;
+}
+
+.teamSelect {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.label {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #F8B229;
+}
+
+.select {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: white;
+  font-size: 1.1rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.select option {
+  background-color: #165B33;
+}
+
+.scoreBoard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 3rem;
+  font-weight: bold;
+}
+
+.scoreInput {
+  width: 80px;
+  height: 80px;
+  text-align: center;
+  font-size: 2.5rem;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(248, 178, 41, 0.5);
+  border-radius: 15px;
+  color: white;
+  outline: none;
+}
+
+.vs {
+  font-size: 1.5rem;
+  color: rgba(255,255,255,0.5);
+  font-weight: bold;
+}
+
+.teamsContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.teamColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.teamHeader {
+  text-align: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.playerCard {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.playerCard:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(248, 178, 41, 0.3);
+  transform: translateY(-2px);
+}
+
+.playerInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.playerName {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.playerNumber {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.6);
+}
+
+.statsControls {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.statGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.statLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0,0,0,0.2);
+  padding: 0.25rem;
+  border-radius: 20px;
+}
+
+.counterBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.counterBtn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.countValue {
+  min-width: 20px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.cardsGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.cardBtn {
+  width: 30px;
+  height: 40px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: rgba(0,0,0,0.7);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.cardBtn:hover {
+  transform: translateY(-2px);
+}
+
+.cardBtn.active {
+  box-shadow: 0 0 10px currentColor;
+  transform: scale(1.1);
+}
+
+.yellowCard { background-color: #FFD700; }
+.redCard { background-color: #FF4136; }
+.blueCard { background-color: #0074D9; }
+
+.cardCount {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: white;
+  color: black;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 3rem;
+}
+
+@media (max-width: 1024px) {
+  .teamsContainer {
+    grid-template-columns: 1fr;
+  }
+  
+  .matchControl {
+    grid-template-columns: 1fr;
+  }
+  
+  .playerCard {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .statsControls {
+    justify-content: space-between;
+  }
+}
