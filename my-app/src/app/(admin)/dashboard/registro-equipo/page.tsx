@@ -12,6 +12,8 @@ interface Player {
   number: string;
 }
 
+import { createTeam } from '@/app/actions/tournament';
+
 export default function RegistroEquipoPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -57,20 +59,38 @@ export default function RegistroEquipoPage() {
     e.preventDefault();
     setLoading(true);
     
-    // Aquí iría la lógica de guardado
-    const dataToSave = {
-      ...formData,
-      players
-    };
-    
-    console.log('Datos del equipo:', dataToSave);
-    
-    // Simulación de guardado
-    setTimeout(() => {
+    try {
+      // Validar que haya al menos un jugador
+      if (players.length === 0) {
+        alert('Debes agregar al menos un jugador.');
+        setLoading(false);
+        return;
+      }
+
+      const result = await createTeam({
+        name: formData.nombreEquipo,
+        coach: formData.entrenador,
+        phone: formData.telefono,
+        email: formData.email,
+        category: formData.categoria,
+        players: players.map(p => ({
+          name: p.name,
+          number: parseInt(p.number) || 0
+        }))
+      });
+
+      if (result.success) {
+        alert('Equipo registrado correctamente');
+        router.push('/dashboard');
+      } else {
+        alert(result.error || 'Error al registrar el equipo');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Ocurrió un error inesperado');
+    } finally {
       setLoading(false);
-      alert('Equipo registrado correctamente (Simulación)');
-      router.push('/dashboard');
-    }, 1000);
+    }
   };
 
   return (

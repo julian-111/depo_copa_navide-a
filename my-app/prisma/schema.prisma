@@ -3,14 +3,14 @@
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-// Modelos iniciales para el sistema de torneos
-
+// User model for Authentication (if needed in future)
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -19,52 +19,84 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-model Tournament {
-  id        String   @id @default(cuid())
-  name      String
-  startDate DateTime
-  endDate   DateTime?
-  status    String   @default("DRAFT") // DRAFT, ONGOING, COMPLETED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  teams     Team[]
-  matches   Match[]
-}
+// Main Models for the Tournament System
 
 model Team {
-  id           String     @id @default(cuid())
-  name         String
-  tournamentId String
-  tournament   Tournament @relation(fields: [tournamentId], references: [id])
-  players      Player[]
-  homeMatches  Match[]    @relation("HomeTeam")
-  awayMatches  Match[]    @relation("AwayTeam")
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id          String   @id @default(cuid())
+  name        String   @unique
+  coach       String   // Delegado/Entrenador
+  phone       String
+  email       String?
+  category    String   @default("Unica")
+  
+  players     Player[]
+  
+  // Relations for matches
+  homeMatches Match[]  @relation("HomeTeam")
+  awayMatches Match[]  @relation("AwayTeam")
+
+  // Stats for the tournament (calculated field mostly, but good to cache)
+  stats       TeamStats?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Player {
   id        String   @id @default(cuid())
   name      String
-  number    Int?
+  number    Int
   teamId    String
-  team      Team     @relation(fields: [teamId], references: [id])
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  // Individual Stats
+  goals     Int      @default(0)
+  fouls     Int      @default(0)
+  yellowCards Int    @default(0)
+  redCards    Int    @default(0)
+  blueCards   Int    @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Match {
-  id           String     @id @default(cuid())
-  tournamentId String
-  tournament   Tournament @relation(fields: [tournamentId], references: [id])
-  homeTeamId   String
-  homeTeam     Team       @relation("HomeTeam", fields: [homeTeamId], references: [id])
-  awayTeamId   String
-  awayTeam     Team       @relation("AwayTeam", fields: [awayTeamId], references: [id])
-  homeScore    Int?
-  awayScore    Int?
-  date         DateTime
-  status       String     @default("SCHEDULED") // SCHEDULED, PLAYED, CANCELLED
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id          String   @id @default(cuid())
+  
+  homeTeamId  String
+  homeTeam    Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  
+  awayTeamId  String
+  awayTeam    Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  
+  homeScore   Int?
+  awayScore   Int?
+  
+  status      String   @default("SCHEDULED") // SCHEDULED, PLAYED, LIVE
+  phase       String   @default("GROUP")     // GROUP, QUARTER_FINAL, SEMI_FINAL, FINAL
+  
+  round       Int?     // For Group Phase
+  leg         Int?     // 1 or 2 for Knockout phases
+  
+  date        DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TeamStats {
+  id             String @id @default(cuid())
+  teamId         String @unique
+  team           Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  played         Int    @default(0)
+  won            Int    @default(0)
+  drawn          Int    @default(0)
+  lost           Int    @default(0)
+  goalsFor       Int    @default(0)
+  goalsAgainst   Int    @default(0)
+  goalDifference Int    @default(0)
+  points         Int    @default(0)
+
+  updatedAt      DateTime @updatedAt
 }

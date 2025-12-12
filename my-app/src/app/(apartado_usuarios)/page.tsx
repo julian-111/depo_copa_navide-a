@@ -1,7 +1,17 @@
 import styles from './page.module.css';
 import Button from '../../components/Button/Button';
+import { getStandings } from '@/app/actions/tournament';
+import { Prisma } from '@prisma/client';
 
-export default function Home() {
+type TeamWithStats = Prisma.TeamGetPayload<{
+  include: {
+    stats: true;
+  };
+}>;
+
+export default async function Home() {
+  const { data: standings } = await getStandings();
+
   return (
     <div className={styles.container}>
       {/* Hero Section */}
@@ -39,16 +49,31 @@ export default function Home() {
                 </tr>
               </thead>
               <tbody>
-                {/* Empty State */}
-                <tr>
-                  <td colSpan={7}>
-                    <div className={styles.emptyState}>
-                      <span className={styles.emptyIcon}>❄️</span>
-                      <h3>Aún no hay equipos registrados</h3>
-                      <p>La tabla de posiciones se actualizará automáticamente cuando comience el torneo.</p>
-                    </div>
-                  </td>
-                </tr>
+                {standings && standings.length > 0 ? (
+                  standings.map((team: TeamWithStats, index: number) => (
+                    <tr key={team.id}>
+                      <td>{index + 1}</td>
+                      <td className={styles.teamNameCell}>
+                        <span className={styles.teamName}>{team.name}</span>
+                      </td>
+                      <td>{team.stats?.played || 0}</td>
+                      <td>{team.stats?.won || 0}</td>
+                      <td>{team.stats?.drawn || 0}</td>
+                      <td>{team.stats?.lost || 0}</td>
+                      <td className={styles.pointsCell}>{team.stats?.points || 0}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7}>
+                      <div className={styles.emptyState}>
+                        <span className={styles.emptyIcon}>❄️</span>
+                        <h3>Aún no hay equipos registrados</h3>
+                        <p>La tabla de posiciones se actualizará automáticamente cuando comience el torneo.</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

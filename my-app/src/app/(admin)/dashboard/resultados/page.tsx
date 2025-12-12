@@ -1,32 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './page.module.css';
 import Button from '../../../../components/Button/Button';
+import { getTeams, saveMatchResult } from '@/app/actions/tournament';
 
-// Mock Data
-const MOCK_TEAMS = [
-  { id: '1', name: 'Renos FC', players: [
-    { id: 'p1', name: 'Rudolph Red', number: 9 },
-    { id: 'p2', name: 'Dasher Fast', number: 7 },
-    { id: 'p3', name: 'Comet Zoom', number: 10 },
-    { id: 'p4', name: 'Vixen Cool', number: 5 },
-  ]},
-  { id: '2', name: 'Duendes United', players: [
-    { id: 'p5', name: 'Buddy Elf', number: 11 },
-    { id: 'p6', name: 'Winky Dinky', number: 8 },
-    { id: 'p7', name: 'Alabaster Snow', number: 23 },
-    { id: 'p8', name: 'Bushy Evergreen', number: 4 },
-  ]},
-  { id: '3', name: 'Santa\'s Helpers', players: [
-    { id: 'p9', name: 'Mrs. Claus', number: 1 },
-    { id: 'p10', name: 'Bernard Chief', number: 6 },
-  ]},
-  { id: '4', name: 'Grinch Team', players: [
-    { id: 'p11', name: 'The Grinch', number: 99 },
-    { id: 'p12', name: 'Max Dog', number: 0 },
-  ]}
-];
+// Types
+interface Player {
+  id: string;
+  name: string;
+  number: number;
+}
+
+interface Team {
+  id: string;
+  name: string;
+  players: Player[];
+}
 
 interface PlayerStats {
   goals: number;
@@ -39,14 +29,33 @@ interface PlayerStats {
 type MatchStats = Record<string, PlayerStats>;
 
 export default function ResultadosPage() {
-  const [homeTeamId, setHomeTeamId] = useState<string>(MOCK_TEAMS[0].id);
-  const [awayTeamId, setAwayTeamId] = useState<string>(MOCK_TEAMS[1].id);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
+  const [homeTeamId, setHomeTeamId] = useState<string>('');
+  const [awayTeamId, setAwayTeamId] = useState<string>('');
   const [homeScore, setHomeScore] = useState<number>(0);
   const [awayScore, setAwayScore] = useState<number>(0);
   const [stats, setStats] = useState<MatchStats>({});
 
-  const homeTeam = MOCK_TEAMS.find(t => t.id === homeTeamId);
-  const awayTeam = MOCK_TEAMS.find(t => t.id === awayTeamId);
+  useEffect(() => {
+    async function loadTeams() {
+      const result = await getTeams();
+      if (result.success && result.data) {
+        setTeams(result.data);
+        if (result.data.length >= 2) {
+          setHomeTeamId(result.data[0].id);
+          setAwayTeamId(result.data[1].id);
+        }
+      }
+      setLoading(false);
+    }
+    loadTeams();
+  }, []);
+
+  const homeTeam = teams.find(t => t.id === homeTeamId);
+  const awayTeam = teams.find(t => t.id === awayTeamId);
 
   const getPlayerStats = (playerId: string): PlayerStats => {
     return stats[playerId] || { goals: 0, fouls: 0, yellowCards: 0, redCards: 0, blueCards: 0 };
@@ -56,6 +65,19 @@ export default function ResultadosPage() {
     setStats(prev => {
       const current = prev[playerId] || { goals: 0, fouls: 0, yellowCards: 0, redCards: 0, blueCards: 0 };
       const newValue = Math.max(0, current[field] + value);
+      
+      // Update score if goals change
+      if (field === 'goals') {
+        const homePlayer = homeTeam?.players.find(p => p.id === playerId);
+        const awayPlayer = awayTeam?.players.find(p => p.id === playerId);
+        
+        if (homePlayer) {
+          setHomeScore(prevScore => Math.max(0, prevScore + value));
+        } else if (awayPlayer) {
+          setAwayScore(prevScore => Math.max(0, prevScore + value));
+        }
+      }
+
       return {
         ...prev,
         [playerId]: { ...current, [field]: newValue }
@@ -63,18 +85,41 @@ export default function ResultadosPage() {
     });
   };
 
-  const handleSave = () => {
-    const matchResult = {
-      homeTeam: homeTeam?.name,
-      awayTeam: awayTeam?.name,
-      score: `${homeScore} - ${awayScore}`,
-      details: stats
-    };
-    console.log('Saving Match Result:', matchResult);
-    alert('Resultado guardado correctamente (Simulación)');
+  const handleSave = async () => {
+    if (!homeTeam || !awayTeam) return;
+    if (homeTeamId === awayTeamId) {
+      alert('Por favor selecciona equipos diferentes');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const result = await saveMatchResult({
+        homeTeamId,
+        awayTeamId,
+        homeScore,
+        awayScore,
+        playerStats: stats
+      });
+
+      if (result.success) {
+        alert('Resultado guardado correctamente');
+        // Reset form or redirect
+        setHomeScore(0);
+        setAwayScore(0);
+        setStats({});
+      } else {
+        alert(result.error || 'Error al guardar el resultado');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Ocurrió un error inesperado');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const renderPlayerCard = (player: { id: string, name: string, number: number }) => {
+  const renderPlayerCard = (player: Player) => {
     const pStats = getPlayerStats(player.id);
     return (
       <div key={player.id} className={styles.playerCard}>
@@ -130,6 +175,10 @@ export default function ResultadosPage() {
     );
   };
 
+  if (loading) {
+    return <div className={styles.container}>Cargando equipos...</div>;
+  }
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -137,83 +186,98 @@ export default function ResultadosPage() {
         <p className={styles.subtitle}>Panel Oficial de Control de Partidos</p>
       </header>
 
-      {/* General Match Info */}
-      <section className={styles.glassPanel}>
-        <div className={styles.matchControl}>
-          <div className={styles.teamSelect}>
-            <label className={styles.label}>
-              <i className="fas fa-home"></i> Equipo Local
-            </label>
-            <select 
-              className={styles.select} 
-              value={homeTeamId} 
-              onChange={(e) => setHomeTeamId(e.target.value)}
+      {teams.length < 2 ? (
+        <div className={styles.glassPanel}>
+          <p>Se necesitan al menos 2 equipos registrados para gestionar resultados.</p>
+        </div>
+      ) : (
+        <>
+          {/* General Match Info */}
+          <section className={styles.glassPanel}>
+            <div className={styles.matchControl}>
+              <div className={styles.teamSelect}>
+                <label className={styles.label}>
+                  <i className="fas fa-home"></i> Equipo Local
+                </label>
+                <select 
+                  className={styles.select} 
+                  value={homeTeamId} 
+                  onChange={(e) => setHomeTeamId(e.target.value)}
+                >
+                  {teams.map(team => (
+                    <option key={team.id} value={team.id} disabled={team.id === awayTeamId}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.scoreBoard}>
+                <input 
+                  type="number" 
+                  className={styles.scoreInput} 
+                  value={homeScore}
+                  onChange={(e) => setHomeScore(Math.max(0, parseInt(e.target.value) || 0))}
+                />
+                <span className={styles.vs}>VS</span>
+                <input 
+                  type="number" 
+                  className={styles.scoreInput} 
+                  value={awayScore}
+                  onChange={(e) => setAwayScore(Math.max(0, parseInt(e.target.value) || 0))}
+                />
+              </div>
+
+              <div className={styles.teamSelect}>
+                <label className={styles.label}>
+                  <i className="fas fa-plane"></i> Equipo Visitante
+                </label>
+                <select 
+                  className={styles.select} 
+                  value={awayTeamId} 
+                  onChange={(e) => setAwayTeamId(e.target.value)}
+                >
+                  {teams.map(team => (
+                    <option key={team.id} value={team.id} disabled={team.id === homeTeamId}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </section>
+
+          {/* Detailed Stats */}
+          <div className={styles.teamsContainer}>
+            {/* Home Team Column */}
+            <div className={styles.teamColumn}>
+              <div className={styles.teamHeader}>
+                <h2>{homeTeam?.name}</h2>
+              </div>
+              {homeTeam?.players.map(renderPlayerCard)}
+            </div>
+
+            {/* Away Team Column */}
+            <div className={styles.teamColumn}>
+              <div className={styles.teamHeader}>
+                <h2>{awayTeam?.name}</h2>
+              </div>
+              {awayTeam?.players.map(renderPlayerCard)}
+            </div>
+          </div>
+
+          <div className={styles.actions}>
+            <Button 
+              onClick={handleSave} 
+              variant="primary" 
+              size="large"
+              disabled={saving}
             >
-              {MOCK_TEAMS.map(team => (
-                <option key={team.id} value={team.id} disabled={team.id === awayTeamId}>
-                  {team.name}
-                </option>
-              ))}
-            </select>
+              {saving ? 'Guardando...' : 'Guardar Resultado Oficial'}
+            </Button>
           </div>
-
-          <div className={styles.scoreBoard}>
-            <input 
-              type="number" 
-              className={styles.scoreInput} 
-              value={homeScore}
-              onChange={(e) => setHomeScore(Math.max(0, parseInt(e.target.value) || 0))}
-            />
-            <span className={styles.vs}>VS</span>
-            <input 
-              type="number" 
-              className={styles.scoreInput} 
-              value={awayScore}
-              onChange={(e) => setAwayScore(Math.max(0, parseInt(e.target.value) || 0))}
-            />
-          </div>
-
-          <div className={styles.teamSelect}>
-            <label className={styles.label}>
-              <i className="fas fa-plane"></i> Equipo Visitante
-            </label>
-            <select 
-              className={styles.select} 
-              value={awayTeamId} 
-              onChange={(e) => setAwayTeamId(e.target.value)}
-            >
-              {MOCK_TEAMS.map(team => (
-                <option key={team.id} value={team.id} disabled={team.id === homeTeamId}>
-                  {team.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </section>
-
-      {/* Detailed Stats */}
-      <div className={styles.teamsContainer}>
-        {/* Home Team Column */}
-        <div className={styles.teamColumn}>
-          <div className={styles.teamHeader}>
-            <h2>{homeTeam?.name}</h2>
-          </div>
-          {homeTeam?.players.map(renderPlayerCard)}
-        </div>
-
-        {/* Away Team Column */}
-        <div className={styles.teamColumn}>
-          <div className={styles.teamHeader}>
-            <h2>{awayTeam?.name}</h2>
-          </div>
-          {awayTeam?.players.map(renderPlayerCard)}
-        </div>
-      </div>
-
-      <div className={styles.actions}>
-        <Button onClick={handleSave} variant="primary" size="large">Guardar Resultado Oficial</Button>
-      </div>
+        </>
+      )}
     </div>
   );
 }
