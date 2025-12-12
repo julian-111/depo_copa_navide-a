@@ -74,18 +74,76 @@ export default function ResultadosPage() {
     alert('Resultado guardado correctamente (Simulación)');
   };
 
+  const renderPlayerCard = (player: { id: string, name: string, number: number }) => {
+    const pStats = getPlayerStats(player.id);
+    return (
+      <div key={player.id} className={styles.playerCard}>
+        <div className={styles.playerInfo}>
+          <span className={styles.playerName}>{player.name}</span>
+          <span className={styles.playerNumber}>
+            <i className={`fas fa-tshirt ${styles.icon}`}></i>
+            {player.number}
+          </span>
+        </div>
+        <div className={styles.statsControls}>
+          <div className={styles.statGroup}>
+            <span className={styles.statLabel}>Goles</span>
+            <div className={styles.counter}>
+              <button className={styles.counterBtn} onClick={() => updateStat(player.id, 'goals', -1)}>-</button>
+              <span className={styles.countValue}>{pStats.goals}</span>
+              <button className={styles.counterBtn} onClick={() => updateStat(player.id, 'goals', 1)}>+</button>
+            </div>
+          </div>
+          <div className={styles.statGroup}>
+            <span className={styles.statLabel}>Faltas</span>
+            <div className={styles.counter}>
+              <button className={styles.counterBtn} onClick={() => updateStat(player.id, 'fouls', -1)}>-</button>
+              <span className={styles.countValue}>{pStats.fouls}</span>
+              <button className={styles.counterBtn} onClick={() => updateStat(player.id, 'fouls', 1)}>+</button>
+            </div>
+          </div>
+          <div className={styles.cardsGroup}>
+            <button 
+              className={`${styles.cardBtn} ${styles.yellowCard}`} 
+              onClick={() => updateStat(player.id, 'yellowCards', 1)}
+              title="Tarjeta Amarilla"
+            >
+              {pStats.yellowCards > 0 && <span className={styles.cardCount}>{pStats.yellowCards}</span>}
+            </button>
+            <button 
+              className={`${styles.cardBtn} ${styles.blueCard}`} 
+              onClick={() => updateStat(player.id, 'blueCards', 1)}
+              title="Tarjeta Azul"
+            >
+              {pStats.blueCards > 0 && <span className={styles.cardCount}>{pStats.blueCards}</span>}
+            </button>
+            <button 
+              className={`${styles.cardBtn} ${styles.redCard}`} 
+              onClick={() => updateStat(player.id, 'redCards', 1)}
+              title="Tarjeta Roja"
+            >
+              {pStats.redCards > 0 && <span className={styles.cardCount}>{pStats.redCards}</span>}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
         <h1 className={styles.title}>Gestión de Resultados</h1>
-        <p>Registra el marcador y las estadísticas detalladas del partido</p>
+        <p className={styles.subtitle}>Panel Oficial de Control de Partidos</p>
       </header>
 
       {/* General Match Info */}
       <section className={styles.glassPanel}>
         <div className={styles.matchControl}>
           <div className={styles.teamSelect}>
-            <label className={styles.label}>Equipo Local</label>
+            <label className={styles.label}>
+              <i className="fas fa-home"></i> Equipo Local
+            </label>
             <select 
               className={styles.select} 
               value={homeTeamId} 
@@ -116,7 +174,9 @@ export default function ResultadosPage() {
           </div>
 
           <div className={styles.teamSelect}>
-            <label className={styles.label}>Equipo Visitante</label>
+            <label className={styles.label}>
+              <i className="fas fa-plane"></i> Equipo Visitante
+            </label>
             <select 
               className={styles.select} 
               value={awayTeamId} 
@@ -139,58 +199,7 @@ export default function ResultadosPage() {
           <div className={styles.teamHeader}>
             <h2>{homeTeam?.name}</h2>
           </div>
-          {homeTeam?.players.map(player => {
-            const pStats = getPlayerStats(player.id);
-            return (
-              <div key={player.id} className={styles.playerCard}>
-                <div className={styles.playerInfo}>
-                  <span className={styles.playerName}>{player.name}</span>
-                  <span className={styles.playerNumber}>#{player.number}</span>
-                </div>
-                <div className={styles.statsControls}>
-                  <div className={styles.statGroup}>
-                    <span className={styles.statLabel}>Goles</span>
-                    <div className={styles.counter}>
-                      <button className={styles.counterBtn} onClick={() => updateStat(player.id, 'goals', -1)}>-</button>
-                      <span className={styles.countValue}>{pStats.goals}</span>
-                      <button className={styles.counterBtn} onClick={() => updateStat(player.id, 'goals', 1)}>+</button>
-                    </div>
-                  </div>
-                  <div className={styles.statGroup}>
-                    <span className={styles.statLabel}>Faltas</span>
-                    <div className={styles.counter}>
-                      <button className={styles.counterBtn} onClick={() => updateStat(player.id, 'fouls', -1)}>-</button>
-                      <span className={styles.countValue}>{pStats.fouls}</span>
-                      <button className={styles.counterBtn} onClick={() => updateStat(player.id, 'fouls', 1)}>+</button>
-                    </div>
-                  </div>
-                  <div className={styles.cardsGroup}>
-                    <button 
-                      className={`${styles.cardBtn} ${styles.yellowCard}`} 
-                      onClick={() => updateStat(player.id, 'yellowCards', 1)}
-                      title="Tarjeta Amarilla"
-                    >
-                      {pStats.yellowCards > 0 && <span className={styles.cardCount}>{pStats.yellowCards}</span>}
-                    </button>
-                    <button 
-                      className={`${styles.cardBtn} ${styles.blueCard}`} 
-                      onClick={() => updateStat(player.id, 'blueCards', 1)}
-                      title="Tarjeta Azul"
-                    >
-                      {pStats.blueCards > 0 && <span className={styles.cardCount}>{pStats.blueCards}</span>}
-                    </button>
-                    <button 
-                      className={`${styles.cardBtn} ${styles.redCard}`} 
-                      onClick={() => updateStat(player.id, 'redCards', 1)}
-                      title="Tarjeta Roja"
-                    >
-                      {pStats.redCards > 0 && <span className={styles.cardCount}>{pStats.redCards}</span>}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {homeTeam?.players.map(renderPlayerCard)}
         </div>
 
         {/* Away Team Column */}
@@ -198,63 +207,12 @@ export default function ResultadosPage() {
           <div className={styles.teamHeader}>
             <h2>{awayTeam?.name}</h2>
           </div>
-          {awayTeam?.players.map(player => {
-            const pStats = getPlayerStats(player.id);
-            return (
-              <div key={player.id} className={styles.playerCard}>
-                <div className={styles.playerInfo}>
-                  <span className={styles.playerName}>{player.name}</span>
-                  <span className={styles.playerNumber}>#{player.number}</span>
-                </div>
-                <div className={styles.statsControls}>
-                  <div className={styles.statGroup}>
-                    <span className={styles.statLabel}>Goles</span>
-                    <div className={styles.counter}>
-                      <button className={styles.counterBtn} onClick={() => updateStat(player.id, 'goals', -1)}>-</button>
-                      <span className={styles.countValue}>{pStats.goals}</span>
-                      <button className={styles.counterBtn} onClick={() => updateStat(player.id, 'goals', 1)}>+</button>
-                    </div>
-                  </div>
-                  <div className={styles.statGroup}>
-                    <span className={styles.statLabel}>Faltas</span>
-                    <div className={styles.counter}>
-                      <button className={styles.counterBtn} onClick={() => updateStat(player.id, 'fouls', -1)}>-</button>
-                      <span className={styles.countValue}>{pStats.fouls}</span>
-                      <button className={styles.counterBtn} onClick={() => updateStat(player.id, 'fouls', 1)}>+</button>
-                    </div>
-                  </div>
-                  <div className={styles.cardsGroup}>
-                    <button 
-                      className={`${styles.cardBtn} ${styles.yellowCard}`} 
-                      onClick={() => updateStat(player.id, 'yellowCards', 1)}
-                      title="Tarjeta Amarilla"
-                    >
-                      {pStats.yellowCards > 0 && <span className={styles.cardCount}>{pStats.yellowCards}</span>}
-                    </button>
-                    <button 
-                      className={`${styles.cardBtn} ${styles.blueCard}`} 
-                      onClick={() => updateStat(player.id, 'blueCards', 1)}
-                      title="Tarjeta Azul"
-                    >
-                      {pStats.blueCards > 0 && <span className={styles.cardCount}>{pStats.blueCards}</span>}
-                    </button>
-                    <button 
-                      className={`${styles.cardBtn} ${styles.redCard}`} 
-                      onClick={() => updateStat(player.id, 'redCards', 1)}
-                      title="Tarjeta Roja"
-                    >
-                      {pStats.redCards > 0 && <span className={styles.cardCount}>{pStats.redCards}</span>}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {awayTeam?.players.map(renderPlayerCard)}
         </div>
       </div>
 
       <div className={styles.actions}>
-        <Button onClick={handleSave} variant="primary">Guardar Resultado Oficial</Button>
+        <Button onClick={handleSave} variant="primary" size="large">Guardar Resultado Oficial</Button>
       </div>
     </div>
   );

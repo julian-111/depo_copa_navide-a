@@ -100,6 +100,26 @@
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Sizes */
+.small {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+}
+
+.medium {
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+}
+
+.large {
+  padding: 1rem 3rem;
+  font-size: 1.25rem;
+  letter-spacing: 2px;
+}
+  cursor: not-allowed;
+  transform: none;
   box-shadow: none;
 }
 
