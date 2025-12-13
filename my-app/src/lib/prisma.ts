@@ -8,7 +8,7 @@ const connectionString = process.env.DATABASE_URL || "postgresql://dummy:dummy@l
 
 const pool = new Pool({ 
   connectionString,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined 
+  ssl: { rejectUnauthorized: false }
 });
 const adapter = new PrismaPg(pool);
 
