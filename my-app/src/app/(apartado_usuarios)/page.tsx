@@ -1,6 +1,6 @@
 import styles from './page.module.css';
 import Button from '../../components/Button/Button';
-import { getStandings } from '@/app/actions/tournament';
+import { getStandings, getTopScorer, getBestDefense, getUpcomingMatches } from '@/app/actions/tournament';
 import { Prisma } from '@prisma/client';
 
 type TeamWithStats = Prisma.TeamGetPayload<{
@@ -11,6 +11,9 @@ type TeamWithStats = Prisma.TeamGetPayload<{
 
 export default async function Home() {
   const { data: standings } = await getStandings();
+  const { data: topScorer } = await getTopScorer();
+  const { data: bestDefense } = await getBestDefense();
+  const { data: upcomingMatches } = await getUpcomingMatches();
 
   return (
     <div className={styles.container}>
@@ -76,6 +79,67 @@ export default async function Home() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      </section>
+
+      {/* Tournament Highlights Section */}
+      <section className={styles.section}>
+        <div className={styles.highlightsGrid}>
+          {/* Goleador */}
+          <div className={`${styles.glass} ${styles.highlightCard}`}>
+            <h3 className={styles.highlightTitle}>Goleador del Torneo</h3>
+            <div className={styles.highlightContent}>
+              <span className={styles.highlightIcon}>⚽</span>
+              {topScorer ? (
+                <>
+                  <p className={styles.highlightName}>{topScorer.name}</p>
+                  <p className={styles.highlightSubtext}>{topScorer.team?.name}</p>
+                  <p className={styles.highlightStat}>{topScorer.goals} Goles</p>
+                </>
+              ) : (
+                <p className={styles.noData}>Aún no hay registros</p>
+              )}
+            </div>
+          </div>
+
+          {/* Valla menos vencida */}
+          <div className={`${styles.glass} ${styles.highlightCard}`}>
+            <h3 className={styles.highlightTitle}>Valla Menos Vencida</h3>
+            <div className={styles.highlightContent}>
+              <span className={styles.highlightIcon}>🛡️</span>
+              {bestDefense ? (
+                <>
+                  <p className={styles.highlightName}>{bestDefense.team?.name}</p>
+                  <p className={styles.highlightStat}>{bestDefense.goalsAgainst} Goles en contra</p>
+                </>
+              ) : (
+                <p className={styles.noData}>Aún no hay registros</p>
+              )}
+            </div>
+          </div>
+
+          {/* Próximos Partidos */}
+          <div className={`${styles.glass} ${styles.highlightCard}`}>
+            <h3 className={styles.highlightTitle}>Próximos Partidos</h3>
+            <div className={styles.matchesList}>
+              {upcomingMatches && upcomingMatches.length > 0 ? (
+                upcomingMatches.map((match) => (
+                  <div key={match.id} className={styles.matchItem}>
+                    <div className={styles.matchTeams}>
+                      <span>{match.homeTeam.name}</span>
+                      <span className={styles.vs}>vs</span>
+                      <span>{match.awayTeam.name}</span>
+                    </div>
+                    <span className={styles.matchDate}>
+                      {match.date ? new Date(match.date).toLocaleDateString() : 'Fecha por definir'}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className={styles.noData}>No hay partidos programados</p>
+              )}
+            </div>
           </div>
         </div>
       </section>

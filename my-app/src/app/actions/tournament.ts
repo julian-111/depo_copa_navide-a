@@ -241,3 +241,69 @@ export async function saveMatchResult(data: MatchResultData) {
     return { success: false as const, error: 'Error al guardar el resultado del partido.' };
   }
 }
+
+export async function getTopScorer() {
+  try {
+    const topScorer = await prisma.player.findFirst({
+      orderBy: {
+        goals: 'desc',
+      },
+      include: {
+        team: true,
+      },
+      where: {
+        goals: {
+          gt: 0
+        }
+      }
+    });
+    return { success: true as const, data: topScorer };
+  } catch (error) {
+    console.error('Error fetching top scorer:', error);
+    return { success: false as const, error: 'Error al obtener el goleador.' };
+  }
+}
+
+export async function getBestDefense() {
+  try {
+    const bestDefense = await prisma.teamStats.findFirst({
+      orderBy: {
+        goalsAgainst: 'asc',
+      },
+      include: {
+        team: true,
+      },
+      where: {
+        played: {
+          gt: 0
+        }
+      }
+    });
+    return { success: true as const, data: bestDefense };
+  } catch (error) {
+    console.error('Error fetching best defense:', error);
+    return { success: false as const, error: 'Error al obtener la valla menos vencida.' };
+  }
+}
+
+export async function getUpcomingMatches() {
+  try {
+    const matches = await prisma.match.findMany({
+      where: {
+        status: 'SCHEDULED',
+      },
+      include: {
+        homeTeam: true,
+        awayTeam: true,
+      },
+      orderBy: {
+        date: 'asc',
+      },
+      take: 3, // Mostrar solo los próximos 3
+    });
+    return { success: true as const, data: matches };
+  } catch (error) {
+    console.error('Error fetching upcoming matches:', error);
+    return { success: false as const, error: 'Error al obtener los próximos partidos.' };
+  }
+}
