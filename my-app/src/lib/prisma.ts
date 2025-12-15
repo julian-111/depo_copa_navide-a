@@ -6,9 +6,17 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 const connectionString = process.env.DATABASE_URL || "postgresql://dummy:dummy@localhost:5432/dummy";
 
+// Eliminar parámetros de la URL para evitar conflictos con la configuración manual de SSL
+const baseConnectionString = connectionString.split('?')[0];
+
 const pool = new Pool({ 
-  connectionString,
-  ssl: { rejectUnauthorized: false }
+  connectionString: baseConnectionString,
+  ssl: { 
+    rejectUnauthorized: false,
+    checkServerIdentity: () => undefined // Deshabilitar verificación de hostname también
+  },
+  max: 10, // Límite de conexiones para evitar saturación
+  idleTimeoutMillis: 30000
 });
 const adapter = new PrismaPg(pool);
 
