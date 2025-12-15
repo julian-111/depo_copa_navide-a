@@ -517,76 +517,141 @@ export async function generateNextPhase() {
       // Generar 4 llaves: 1vs8, 2vs7, 3vs6, 4vs5
       const top8 = rankedTeams.slice(0, 8);
       const pairings = [
-        { home: top8[0], away: top8[7] }, // 1 vs 8
-        { home: top8[1], away: top8[6] }, // 2 vs 7
-        { home: top8[2], away: top8[5] }, // 3 vs 6
-        { home: top8[3], away: top8[4] }, // 4 vs 5
+        { high: top8[0], low: top8[7] }, // 1 vs 8
+        { high: top8[1], low: top8[6] }, // 2 vs 7
+        { high: top8[2], low: top8[5] }, // 3 vs 6
+        { high: top8[3], low: top8[4] }, // 4 vs 5
       ];
 
-      await prisma.$transaction(
-        pairings.map(pair => 
-          prisma.match.create({
-            data: {
-              homeTeamId: pair.home.id,
-              awayTeamId: pair.away.id,
-              phase: 'QUARTER_FINAL',
-              status: 'SCHEDULED',
-              date: new Date(new Date().setDate(new Date().getDate() + 3)) // Fecha tentativa: 3 días después
-            }
-          })
-        )
-      );
+      const matchesToCreate = [];
+
+      for (const pair of pairings) {
+        // Partido de IDA (Local: Peor clasificado)
+        matchesToCreate.push({
+          homeTeamId: pair.low.id,
+          awayTeamId: pair.high.id,
+          phase: 'QUARTER_FINAL',
+          status: 'SCHEDULED',
+          leg: 1,
+          date: new Date(new Date().setDate(new Date().getDate() + 3)) // +3 días
+        });
+
+        // Partido de VUELTA (Local: Mejor clasificado)
+        matchesToCreate.push({
+          homeTeamId: pair.high.id,
+          awayTeamId: pair.low.id,
+          phase: 'QUARTER_FINAL',
+          status: 'SCHEDULED',
+          leg: 2,
+          date: new Date(new Date().setDate(new Date().getDate() + 7)) // +7 días (una semana después)
+        });
+      }
+
+      await prisma.match.createMany({
+        data: matchesToCreate
+      });
 
       revalidatePath('/dashboard/programacion');
-      return { success: true as const, message: 'Cuartos de Final generados correctamente.' };
+      return { success: true as const, message: 'Cuartos de Final (Ida y Vuelta) generados correctamente.' };
     }
 
     // CASO 2: De Cuartos a Semifinales
     if (hasQuarters && !hasSemis && !scheduledSemis && !hasFinal) {
-      // Necesitamos saber quién ganó los cuartos
-      // Asumimos partido único por simplicidad o buscamos ganadores
-      // Buscamos los 4 partidos de cuartos jugados
+      // Necesitamos saber quién ganó los cuartos (Global)
       const qfMatches = await prisma.match.findMany({
         where: { phase: 'QUARTER_FINAL', status: 'PLAYED' },
         include: { homeTeam: true, awayTeam: true }
       });
 
-      if (qfMatches.length < 4) {
-         return { success: false as const, error: 'Deben jugarse todos los partidos de Cuartos para avanzar.' };
+      // Deberíamos tener 8 partidos jugados (4 llaves x 2 partidos)
+      if (qfMatches.length < 8) {
+         return { success: false as const, error: 'Deben jugarse todos los partidos de Cuartos (Ida y Vuelta) para avanzar.' };
       }
 
-      const winners = qfMatches.map(m => {
-        if ((m.homeScore ?? 0) > (m.awayScore ?? 0)) return m.homeTeam;
-        if ((m.awayScore ?? 0) > (m.homeScore ?? 0)) return m.awayTeam;
-        // En caso de empate, debería haber penales, pero por ahora tomamos home (FIXME)
-        return m.homeTeam; 
-      });
-
-      // Emparejamientos Semis: Ganador 1 vs Ganador 4, Ganador 2 vs Ganador 3?
-      // O aleatorio? Asumamos orden de llaves: 
-      // Llave A (1v8) vs Llave D (4v5) -> No, suele ser 1v8 vs 4v5
-      // Vamos a emparejar [0] vs [3] y [1] vs [2] asumiendo que el orden de qfMatches es cronológico o por ID
-      // Esto es arriesgado. Mejor sería trackear llaves.
-      // Simplificación: Emparejar 1ro con 2do, 3ro con 4to de la lista de ganadores.
+      // Agrupar partidos por equipos para identificar las llaves
+      // Una forma simple es usar un Set de IDs de equipos y ver quiénes pasaron
+      // Pero necesitamos saber quién jugó contra quién.
+      // Estrategia: Identificar las llaves originales. 
+      // Las llaves se definen por los equipos que juegan entre sí.
       
-      if (winners.length < 4) return { success: false as const, error: 'Error al determinar ganadores.' };
+      const winners: { team: any, globalScore: number }[] = [];
+      const processedMatches = new Set<string>();
 
+      for (const match of qfMatches) {
+        if (processedMatches.has(match.id)) continue;
+
+        // Buscar el partido "hermano" (mismos equipos, diferente leg)
+        const otherMatch = qfMatches.find(m => 
+          m.id !== match.id && 
+          ((m.homeTeamId === match.awayTeamId && m.awayTeamId === match.homeTeamId) ||
+           (m.homeTeamId === match.homeTeamId && m.awayTeamId === match.awayTeamId)) // Caso raro si no se invirtió localía
+        );
+
+        if (!otherMatch) continue; // Algo anda mal o falta el partido
+
+        processedMatches.add(match.id);
+        processedMatches.add(otherMatch.id);
+
+        // Calcular Global
+        // Equipo A (Home en match)
+        const teamA = match.homeTeam;
+        const teamB = match.awayTeam;
+
+        let scoreA = (match.homeScore || 0);
+        let scoreB = (match.awayScore || 0);
+
+        // Sumar del otro partido
+        if (otherMatch.homeTeamId === teamA.id) {
+           scoreA += (otherMatch.homeScore || 0);
+           scoreB += (otherMatch.awayScore || 0);
+        } else {
+           scoreB += (otherMatch.homeScore || 0);
+           scoreA += (otherMatch.awayScore || 0);
+        }
+
+        if (scoreA > scoreB) {
+          winners.push({ team: teamA, globalScore: scoreA });
+        } else if (scoreB > scoreA) {
+          winners.push({ team: teamB, globalScore: scoreB });
+        } else {
+          // EMPATE GLOBAL: Aquí deberíamos ver penales o ventaja deportiva.
+          // Por defecto en este código simple: Pasa el que metió más goles de visitante?
+          // O simplificamos pasando al azar/primero encontrado (TODO: Mejorar esto con penales)
+          // Asumiremos ventaja deportiva para el que fue Home en la vuelta (mejor clasificado usualmente)
+          // Si match es leg 2 (vuelta), teamA es home.
+          if (match.leg === 2) winners.push({ team: teamA, globalScore: scoreA });
+          else winners.push({ team: teamB, globalScore: scoreB }); 
+        }
+      }
+
+      if (winners.length < 4) return { success: false as const, error: 'Error al determinar ganadores (verifique resultados completos).' };
+
+      // Emparejamientos Semis
+      // Asumimos que winners[0] vs winners[3] y winners[1] vs winners[2] no es exacto porque el orden de iteración es arbitrario.
+      // Lo ideal sería mantener el seeding.
+      // Por ahora, emparejamos [0]vs[1] y [2]vs[3] aleatorio de la lista de ganadores.
+      
       await prisma.$transaction([
         prisma.match.create({
           data: {
-            homeTeamId: winners[0].id,
-            awayTeamId: winners[1].id,
+            homeTeamId: winners[0].team.id,
+            awayTeamId: winners[1].team.id,
             phase: 'SEMI_FINAL',
             status: 'SCHEDULED',
+            leg: 1, // Semis también ida y vuelta? El usuario solo preguntó por cuartos. Asumimos partido único o ida y vuelta?
+                    // "en la face de cuartos eso es automatico" -> Solo mencionó cuartos explícitamente.
+                    // Generalmente semis también son ida y vuelta, pero hagámoslo partido único para diferenciar o igual?
+                    // Haré partido único en cancha neutral/local sorteado para Semis y Final, salvo que se pida lo contrario.
             date: new Date(new Date().setDate(new Date().getDate() + 3))
           }
         }),
         prisma.match.create({
           data: {
-            homeTeamId: winners[2].id,
-            awayTeamId: winners[3].id,
+            homeTeamId: winners[2].team.id,
+            awayTeamId: winners[3].team.id,
             phase: 'SEMI_FINAL',
             status: 'SCHEDULED',
+            leg: 1,
             date: new Date(new Date().setDate(new Date().getDate() + 3))
           }
         })
