@@ -26,6 +26,26 @@
   flex-direction: column;
 }
 
+@media (max-width: 768px) {
+  .modal {
+    max-height: 95vh;
+    width: 95%;
+  }
+  
+  .header {
+    padding: 1rem;
+  }
+  
+  .content {
+    padding: 1rem;
+  }
+  
+  .scoreSection {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
 .header {
   padding: 1.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -112,6 +132,8 @@
   background: rgba(255,255,255,0.02);
   border-radius: 12px;
   padding: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .columnHeader {
@@ -125,11 +147,12 @@
 
 .playerRow {
   display: grid;
-  grid-template-columns: 2fr repeat(5, 1fr);
+  grid-template-columns: 2fr repeat(5, minmax(40px, 1fr));
   gap: 0.5rem;
   align-items: center;
   padding: 0.5rem;
   border-bottom: 1px solid rgba(255,255,255,0.05);
+  min-width: 500px; /* Force scroll on small screens */
 }
 
 .playerRow:last-child {
@@ -161,12 +184,13 @@
 
 .statHeader {
   display: grid;
-  grid-template-columns: 2fr repeat(5, 1fr);
+  grid-template-columns: 2fr repeat(5, minmax(40px, 1fr));
   gap: 0.5rem;
   padding: 0.5rem;
   font-size: 0.8rem;
   color: rgba(255,255,255,0.6);
   text-align: center;
+  min-width: 500px; /* Match playerRow width */
 }
 
 .statLabel {

@@ -133,16 +133,29 @@
 }
 
 @media (max-width: 600px) {
+  .container {
+    padding: 1rem;
+  }
+
   .matchCard {
     flex-direction: column;
     text-align: center;
+    padding: 1rem;
   }
   .matchInfo {
     flex-direction: column;
     width: 100%;
+    min-width: 0;
   }
   .teamName {
     width: 100%;
     text-align: center !important;
+  }
+  .actions {
+    width: 100%;
+  }
+  .editBtn {
+    width: 100%;
+    justify-content: center;
   }
 }
