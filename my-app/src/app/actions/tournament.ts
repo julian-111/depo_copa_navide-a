@@ -65,6 +65,9 @@ export async function createTeam(data: CreateTeamData) {
 
     revalidatePath('/dashboard/registro-equipo');
     revalidatePath('/dashboard/resultados');
+    revalidatePath('/dashboard/equipos-registrados');
+    revalidatePath('/equipos');
+    revalidatePath('/');
     
     return { success: true as const, data: newTeam };
   } catch (error) {
@@ -151,6 +154,8 @@ export async function deleteTeam(teamId: string) {
     
     revalidatePath('/dashboard/registro-equipo');
     revalidatePath('/dashboard/equipos-registrados');
+    revalidatePath('/equipos');
+    revalidatePath('/');
     return { success: true as const };
   } catch (error) {
     console.error('Error deleting team:', error);
@@ -232,6 +237,8 @@ export async function updateTeam(data: UpdateTeamData) {
 
     revalidatePath('/dashboard/equipos-registrados');
     revalidatePath('/dashboard/registro-equipo');
+    revalidatePath('/equipos');
+    revalidatePath('/');
     return { success: true as const };
   } catch (error) {
     console.error('Error updating team:', error);
