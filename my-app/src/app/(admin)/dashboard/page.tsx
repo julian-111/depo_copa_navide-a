@@ -51,6 +51,10 @@ export default function DashboardPage() {
           <h2 className={styles.cardTitle}>Equipos Registrados</h2>
           <p className={styles.cardContent}>Ver lista completa de equipos y sus detalles.</p>
         </Link>
+        <Link href="/dashboard/programacion" className={styles.card}>
+          <h2 className={styles.cardTitle}>Programación</h2>
+          <p className={styles.cardContent}>Gestionar calendario y generar cruces de fases.</p>
+        </Link>
       </div>
     </div>
   );

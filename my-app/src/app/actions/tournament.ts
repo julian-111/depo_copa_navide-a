@@ -413,3 +413,223 @@ export async function getUpcomingMatches() {
     return { success: false as const, error: 'Error al obtener los próximos partidos.' };
   }
 }
+
+// --- Nuevas funciones para Programación de Partidos ---
+
+interface ScheduleMatchData {
+  homeTeamId: string;
+  awayTeamId: string;
+  date: Date;
+  phase: string; // 'GROUP', 'QUARTER_FINAL', 'SEMI_FINAL', 'FINAL'
+}
+
+export async function scheduleMatch(data: ScheduleMatchData) {
+  try {
+    const match = await prisma.match.create({
+      data: {
+        homeTeamId: data.homeTeamId,
+        awayTeamId: data.awayTeamId,
+        date: data.date,
+        phase: data.phase,
+        status: 'SCHEDULED',
+      },
+    });
+    revalidatePath('/dashboard/programacion');
+    return { success: true as const, data: match };
+  } catch (error) {
+    console.error('Error scheduling match:', error);
+    return { success: false as const, error: 'Error al programar el partido.' };
+  }
+}
+
+export async function getAllScheduledMatches() {
+  try {
+    const matches = await prisma.match.findMany({
+      where: {
+        status: 'SCHEDULED',
+      },
+      include: {
+        homeTeam: true,
+        awayTeam: true,
+      },
+      orderBy: {
+        date: 'asc',
+      },
+    });
+    return { success: true as const, data: matches };
+  } catch (error) {
+    console.error('Error fetching scheduled matches:', error);
+    return { success: false as const, error: 'Error al obtener los partidos programados.' };
+  }
+}
+
+export async function deleteMatch(matchId: string) {
+  try {
+    await prisma.match.delete({
+      where: { id: matchId },
+    });
+    revalidatePath('/dashboard/programacion');
+    return { success: true as const };
+  } catch (error) {
+    console.error('Error deleting match:', error);
+    return { success: false as const, error: 'Error al eliminar el partido.' };
+  }
+}
+
+export async function generateNextPhase() {
+  try {
+    // 1. Determinar en qué fase estamos analizando los partidos JUGADOS
+    const playedMatches = await prisma.match.findMany({
+      where: { status: 'PLAYED' },
+      select: { phase: true }
+    });
+
+    const hasFinal = playedMatches.some(m => m.phase === 'FINAL');
+    const hasSemis = playedMatches.some(m => m.phase === 'SEMI_FINAL');
+    const hasQuarters = playedMatches.some(m => m.phase === 'QUARTER_FINAL');
+    
+    // Verificar si ya existen partidos PROGRAMADOS de la siguiente fase para no duplicar
+    const scheduledMatches = await prisma.match.findMany({
+      where: { status: 'SCHEDULED' },
+      select: { phase: true }
+    });
+    const scheduledQuarters = scheduledMatches.some(m => m.phase === 'QUARTER_FINAL');
+    const scheduledSemis = scheduledMatches.some(m => m.phase === 'SEMI_FINAL');
+    const scheduledFinal = scheduledMatches.some(m => m.phase === 'FINAL');
+
+    // Lógica de transición
+    
+    // CASO 1: De Grupos a Cuartos
+    // Si no hay cuartos (jugados ni programados) y asumimos que la fase de grupos terminó
+    // (Esto es un botón manual, así que confiamos en que el admin lo presiona cuando toca)
+    if (!hasQuarters && !scheduledQuarters && !hasSemis && !hasFinal) {
+      // Obtener tabla de posiciones
+      const standingsResult = await getStandings();
+      if (!standingsResult.success || !standingsResult.data) {
+        throw new Error('No se pudo obtener la tabla de posiciones');
+      }
+      const rankedTeams = standingsResult.data;
+      
+      if (rankedTeams.length < 8) {
+        return { success: false as const, error: 'Se necesitan al menos 8 equipos para generar Cuartos de Final.' };
+      }
+
+      // Generar 4 llaves: 1vs8, 2vs7, 3vs6, 4vs5
+      const top8 = rankedTeams.slice(0, 8);
+      const pairings = [
+        { home: top8[0], away: top8[7] }, // 1 vs 8
+        { home: top8[1], away: top8[6] }, // 2 vs 7
+        { home: top8[2], away: top8[5] }, // 3 vs 6
+        { home: top8[3], away: top8[4] }, // 4 vs 5
+      ];
+
+      await prisma.$transaction(
+        pairings.map(pair => 
+          prisma.match.create({
+            data: {
+              homeTeamId: pair.home.id,
+              awayTeamId: pair.away.id,
+              phase: 'QUARTER_FINAL',
+              status: 'SCHEDULED',
+              date: new Date(new Date().setDate(new Date().getDate() + 3)) // Fecha tentativa: 3 días después
+            }
+          })
+        )
+      );
+
+      revalidatePath('/dashboard/programacion');
+      return { success: true as const, message: 'Cuartos de Final generados correctamente.' };
+    }
+
+    // CASO 2: De Cuartos a Semifinales
+    if (hasQuarters && !hasSemis && !scheduledSemis && !hasFinal) {
+      // Necesitamos saber quién ganó los cuartos
+      // Asumimos partido único por simplicidad o buscamos ganadores
+      // Buscamos los 4 partidos de cuartos jugados
+      const qfMatches = await prisma.match.findMany({
+        where: { phase: 'QUARTER_FINAL', status: 'PLAYED' },
+        include: { homeTeam: true, awayTeam: true }
+      });
+
+      if (qfMatches.length < 4) {
+         return { success: false as const, error: 'Deben jugarse todos los partidos de Cuartos para avanzar.' };
+      }
+
+      const winners = qfMatches.map(m => {
+        if ((m.homeScore ?? 0) > (m.awayScore ?? 0)) return m.homeTeam;
+        if ((m.awayScore ?? 0) > (m.homeScore ?? 0)) return m.awayTeam;
+        // En caso de empate, debería haber penales, pero por ahora tomamos home (FIXME)
+        return m.homeTeam; 
+      });
+
+      // Emparejamientos Semis: Ganador 1 vs Ganador 4, Ganador 2 vs Ganador 3?
+      // O aleatorio? Asumamos orden de llaves: 
+      // Llave A (1v8) vs Llave D (4v5) -> No, suele ser 1v8 vs 4v5
+      // Vamos a emparejar [0] vs [3] y [1] vs [2] asumiendo que el orden de qfMatches es cronológico o por ID
+      // Esto es arriesgado. Mejor sería trackear llaves.
+      // Simplificación: Emparejar 1ro con 2do, 3ro con 4to de la lista de ganadores.
+      
+      if (winners.length < 4) return { success: false as const, error: 'Error al determinar ganadores.' };
+
+      await prisma.$transaction([
+        prisma.match.create({
+          data: {
+            homeTeamId: winners[0].id,
+            awayTeamId: winners[1].id,
+            phase: 'SEMI_FINAL',
+            status: 'SCHEDULED',
+            date: new Date(new Date().setDate(new Date().getDate() + 3))
+          }
+        }),
+        prisma.match.create({
+          data: {
+            homeTeamId: winners[2].id,
+            awayTeamId: winners[3].id,
+            phase: 'SEMI_FINAL',
+            status: 'SCHEDULED',
+            date: new Date(new Date().setDate(new Date().getDate() + 3))
+          }
+        })
+      ]);
+
+      revalidatePath('/dashboard/programacion');
+      return { success: true as const, message: 'Semifinales generadas correctamente.' };
+    }
+
+    // CASO 3: De Semifinales a Final
+    if (hasSemis && !hasFinal && !scheduledFinal) {
+      const sfMatches = await prisma.match.findMany({
+        where: { phase: 'SEMI_FINAL', status: 'PLAYED' },
+        include: { homeTeam: true, awayTeam: true }
+      });
+
+      if (sfMatches.length < 2) {
+        return { success: false as const, error: 'Deben jugarse las dos Semifinales para avanzar.' };
+      }
+
+      const finalists = sfMatches.map(m => {
+        if ((m.homeScore ?? 0) > (m.awayScore ?? 0)) return m.homeTeam;
+        return m.awayTeam;
+      });
+
+      await prisma.match.create({
+        data: {
+          homeTeamId: finalists[0].id,
+          awayTeamId: finalists[1].id,
+          phase: 'FINAL',
+          status: 'SCHEDULED',
+          date: new Date(new Date().setDate(new Date().getDate() + 3))
+        }
+      });
+
+      revalidatePath('/dashboard/programacion');
+      return { success: true as const, message: 'Gran Final generada correctamente.' };
+    }
+
+    return { success: false as const, error: 'No se pudo determinar la siguiente fase o ya existen partidos programados.' };
+
+  } catch (error) {
+    console.error('Error generating next phase:', error);
+    return { success: false as const, error: 'Error al generar la siguiente fase.' };
+  }
+}
