@@ -69,7 +69,9 @@ export async function createTeam(data: CreateTeamData) {
     return { success: true as const, data: newTeam };
   } catch (error) {
     console.error('Error creating team:', error);
-    return { success: false as const, error: 'Error al crear el equipo. Inténtalo de nuevo.' };
+    // Devolvemos el mensaje exacto del error para depuración
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    return { success: false as const, error: `Error: ${errorMessage}` };
   }
 }
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '../../../components/Button/Button';
 import styles from './page.module.css';
+import { verifyLogin } from '@/app/actions/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,17 +20,19 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    // Simulación de autenticación
-    // En un caso real, esto conectaría con el backend
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const result = await verifyLogin(formData.username, formData.password);
 
-    if (formData.username === 'admin' && formData.password === 'admin123') {
-      // Login exitoso
-      // Guardar estado (demo)
-      sessionStorage.setItem('isAdmin', 'true');
-      router.push('/dashboard');
-    } else {
-      setError('Credenciales incorrectas. Intenta con admin / admin123');
+      if (result.success) {
+        // Login exitoso
+        sessionStorage.setItem('isAdmin', 'true');
+        router.push('/dashboard');
+      } else {
+        setError(result.error || 'Credenciales incorrectas.');
+        setLoading(false);
+      }
+    } catch (err) {
+      setError('Ocurrió un error al intentar iniciar sesión.');
       setLoading(false);
     }
   };
