@@ -93,6 +93,27 @@ export async function getTeams() {
   }
 }
 
+export async function getTeamById(id: string) {
+  try {
+    const team = await prisma.team.findUnique({
+      where: { id },
+      include: {
+        players: true,
+        stats: true,
+      },
+    });
+    
+    if (!team) {
+      return { success: false as const, error: 'Equipo no encontrado' };
+    }
+
+    return { success: true as const, data: team };
+  } catch (error) {
+    console.error('Error fetching team:', error);
+    return { success: false as const, error: 'Error al obtener el equipo' };
+  }
+}
+
 export async function getStandings() {
   try {
     const teams = await prisma.team.findMany({
@@ -129,10 +150,93 @@ export async function deleteTeam(teamId: string) {
     });
     
     revalidatePath('/dashboard/registro-equipo');
+    revalidatePath('/dashboard/equipos-registrados');
     return { success: true as const };
   } catch (error) {
     console.error('Error deleting team:', error);
     return { success: false as const, error: 'Error al eliminar el equipo.' };
+  }
+}
+
+// Interfaz para actualizar equipo
+interface UpdateTeamData {
+  id: string;
+  name: string;
+  coach: string;
+  phone: string;
+  email?: string;
+  players: {
+    id?: string; // Si tiene ID es update, si no es create
+    name: string;
+    number: number;
+  }[];
+}
+
+export async function updateTeam(data: UpdateTeamData) {
+  try {
+    // Usamos transacción para asegurar consistencia
+    await prisma.$transaction(async (tx) => {
+      // 1. Actualizar datos básicos del equipo
+      await tx.team.update({
+        where: { id: data.id },
+        data: {
+          name: data.name,
+          coach: data.coach,
+          phone: data.phone,
+          email: data.email,
+        }
+      });
+
+      // 2. Manejar jugadores
+      // Obtener jugadores actuales para saber cuáles eliminar
+      const currentPlayers = await tx.player.findMany({
+        where: { teamId: data.id },
+        select: { id: true }
+      });
+      
+      const currentPlayerIds = currentPlayers.map(p => p.id);
+      const incomingPlayerIds = data.players.filter(p => p.id).map(p => p.id as string);
+      
+      // Identificar IDs a eliminar (los que están en DB pero no en la data entrante)
+      const playersToDelete = currentPlayerIds.filter(id => !incomingPlayerIds.includes(id));
+      
+      if (playersToDelete.length > 0) {
+        await tx.player.deleteMany({
+          where: { id: { in: playersToDelete } }
+        });
+      }
+
+      // Actualizar o Crear jugadores
+      for (const player of data.players) {
+        if (player.id) {
+          // Update existing
+          await tx.player.update({
+            where: { id: player.id },
+            data: {
+              name: player.name,
+              number: player.number
+            }
+          });
+        } else {
+          // Create new
+          await tx.player.create({
+            data: {
+              name: player.name,
+              number: player.number,
+              teamId: data.id
+            }
+          });
+        }
+      }
+    });
+
+    revalidatePath('/dashboard/equipos-registrados');
+    revalidatePath('/dashboard/registro-equipo');
+    return { success: true as const };
+  } catch (error) {
+    console.error('Error updating team:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    return { success: false as const, error: `Error al actualizar equipo: ${errorMessage}` };
   }
 }
 

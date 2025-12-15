@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getTeams } from '@/app/actions/tournament';
+import { useRouter } from 'next/navigation';
+import { getTeams, deleteTeam } from '@/app/actions/tournament';
 import styles from './page.module.css';
 
 interface Team {
@@ -15,25 +16,54 @@ interface Team {
 }
 
 export default function RegisteredTeamsPage() {
+  const router = useRouter();
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
+  const [inspectTeam, setInspectTeam] = useState<Team | null>(null);
 
   useEffect(() => {
-    async function fetchTeams() {
-      try {
-        const result = await getTeams();
-        if (result.success && result.data) {
-          setTeams(result.data);
-        }
-      } catch (error) {
-        console.error('Error fetching teams:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchTeams();
   }, []);
+
+  async function fetchTeams() {
+    try {
+      const result = await getTeams();
+      if (result.success && result.data) {
+        setTeams(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleDelete = async (teamId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar este equipo? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    try {
+      const result = await deleteTeam(teamId);
+      if (result.success) {
+        alert('Equipo eliminado correctamente');
+        fetchTeams(); // Recargar la lista
+      } else {
+        alert(result.error || 'Error al eliminar el equipo');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al procesar la solicitud');
+    }
+  };
+
+  const handleEdit = (teamId: string) => {
+    router.push(`/dashboard/editar-equipo/${teamId}`);
+  };
+
+  const handleInspect = (team: Team) => {
+    setInspectTeam(team);
+  };
 
   return (
     <div className={styles.container}>
@@ -64,7 +94,7 @@ export default function RegisteredTeamsPage() {
                 <th>Contacto</th>
                 <th>Categoría</th>
                 <th>Jugadores</th>
-                <th>Estado</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -80,12 +110,64 @@ export default function RegisteredTeamsPage() {
                   <td>{team.category}</td>
                   <td>{team.players.length}</td>
                   <td>
-                    <span className={styles.badge}>Activo</span>
+                    <div className={styles.actions}>
+                      <button 
+                        className={`${styles.actionBtn} ${styles.inspectBtn}`}
+                        onClick={() => handleInspect(team)}
+                        title="Inspeccionar Jugadores"
+                      >
+                        <i className="fas fa-eye"></i> 👁️
+                      </button>
+                      <button 
+                        className={`${styles.actionBtn} ${styles.editBtn}`}
+                        onClick={() => handleEdit(team.id)}
+                        title="Editar Equipo"
+                      >
+                        <i className="fas fa-edit"></i> ✏️
+                      </button>
+                      <button 
+                        className={`${styles.actionBtn} ${styles.deleteBtn}`}
+                        onClick={() => handleDelete(team.id)}
+                        title="Eliminar Equipo"
+                      >
+                        <i className="fas fa-trash"></i> 🗑️
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Modal de Inspección */}
+      {inspectTeam && (
+        <div className={styles.modalOverlay} onClick={() => setInspectTeam(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>{inspectTeam.name}</h2>
+              <button className={styles.closeBtn} onClick={() => setInspectTeam(null)}>×</button>
+            </div>
+            
+            <div className={styles.modalContent}>
+              <h3 style={{ color: '#9ca3af', marginBottom: '1rem' }}>Lista de Jugadores</h3>
+              {inspectTeam.players.length > 0 ? (
+                <ul className={styles.playerList}>
+                  {inspectTeam.players.map((player: any) => (
+                    <li key={player.id} className={styles.playerItem}>
+                      <span>
+                        <span className={styles.playerNumber}>{player.number}</span>
+                        {player.name}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p style={{ color: '#6b7280', textAlign: 'center' }}>No hay jugadores registrados.</p>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
