@@ -64,12 +64,18 @@
 
 .grid {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 1fr;
   gap: 2rem;
   position: relative;
   z-index: 1;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr 2fr;
+  }
 }
 
 .glassPanel {

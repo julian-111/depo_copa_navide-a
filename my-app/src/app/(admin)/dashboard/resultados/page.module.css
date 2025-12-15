@@ -68,6 +68,13 @@
   align-items: center;
 }
 
+@media (max-width: 768px) {
+  .matchControl {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
 .teamSelect {
   display: flex;
   flex-direction: column;
@@ -158,6 +165,13 @@
   z-index: 1;
 }
 
+@media (max-width: 1024px) {
+  .teamsContainer {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
 .teamColumn {
   display: flex;
   flex-direction: column;
@@ -193,6 +207,14 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .playerCard {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
 }
 
 .playerCard::before {

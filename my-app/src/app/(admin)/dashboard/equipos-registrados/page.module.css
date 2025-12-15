@@ -10,10 +10,19 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .title {
-  font-size: 2rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
   font-weight: 700;
   color: #f3f4f6;
 }
@@ -43,12 +52,14 @@
   border-radius: 16px;
   overflow: hidden;
   margin-top: 2rem;
+  overflow-x: auto;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  min-width: 600px; /* Ensure table doesn't squash too much */
 }
 
 .table th,
