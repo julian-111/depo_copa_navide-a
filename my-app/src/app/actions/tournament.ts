@@ -305,8 +305,20 @@ export async function saveMatchResult(data: MatchResultData) {
       }
 
       // 3. Calcular puntos y actualizar estadísticas de equipos
-      const homePoints = data.homeScore > data.awayScore ? 3 : data.homeScore === data.awayScore ? 1 : 0;
-      const awayPoints = data.awayScore > data.homeScore ? 3 : data.homeScore === data.awayScore ? 1 : 0;
+      // Reglas oficiales: Ganar = 3 puntos, Empate = 1 punto, Perder = 0 puntos
+      let homePoints = 0;
+      let awayPoints = 0;
+
+      if (data.homeScore > data.awayScore) {
+        homePoints = 3;
+        awayPoints = 0;
+      } else if (data.homeScore === data.awayScore) {
+        homePoints = 1;
+        awayPoints = 1;
+      } else {
+        homePoints = 0;
+        awayPoints = 3;
+      }
 
       // Actualizar Home Team
       await tx.teamStats.upsert({
