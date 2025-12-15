@@ -248,6 +248,7 @@ export async function updateTeam(data: UpdateTeamData) {
 }
 
 interface MatchResultData {
+  matchId?: string;
   homeTeamId: string;
   awayTeamId: string;
   homeScore: number;
@@ -264,18 +265,30 @@ interface MatchResultData {
 export async function saveMatchResult(data: MatchResultData) {
   try {
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // 1. Crear el partido
-      const match = await tx.match.create({
-        data: {
-          homeTeamId: data.homeTeamId,
-          awayTeamId: data.awayTeamId,
-          homeScore: data.homeScore,
-          awayScore: data.awayScore,
-          status: 'PLAYED',
-          phase: 'GROUP', // Por defecto, se puede mejorar después para seleccionar fase
-          date: new Date(),
-        },
-      });
+      // 1. Crear o Actualizar el partido
+      let match;
+      if (data.matchId) {
+        match = await tx.match.update({
+          where: { id: data.matchId },
+          data: {
+            homeScore: data.homeScore,
+            awayScore: data.awayScore,
+            status: 'PLAYED',
+          },
+        });
+      } else {
+        match = await tx.match.create({
+          data: {
+            homeTeamId: data.homeTeamId,
+            awayTeamId: data.awayTeamId,
+            homeScore: data.homeScore,
+            awayScore: data.awayScore,
+            status: 'PLAYED',
+            phase: 'GROUP', // Por defecto
+            date: new Date(),
+          },
+        });
+      }
 
       // 2. Actualizar estadísticas de jugadores
       for (const [playerId, stats] of Object.entries(data.playerStats)) {

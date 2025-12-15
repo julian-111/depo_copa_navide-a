@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './page.module.css';
 import Button from '../../../../components/Button/Button';
-import { getTeams, saveMatchResult } from '@/app/actions/tournament';
+import { getTeams, saveMatchResult, getAllScheduledMatches } from '@/app/actions/tournament';
 
 // Types
 interface Player {
@@ -18,6 +18,16 @@ interface Team {
   players: Player[];
 }
 
+interface Match {
+  id: string;
+  homeTeamId: string;
+  awayTeamId: string;
+  homeTeam: { name: string };
+  awayTeam: { name: string };
+  date: Date | null;
+  phase: string;
+}
+
 interface PlayerStats {
   goals: number;
   fouls: number;
@@ -30,32 +40,45 @@ type MatchStats = Record<string, PlayerStats>;
 
 export default function ResultadosPage() {
   const [teams, setTeams] = useState<Team[]>([]);
+  const [scheduledMatches, setScheduledMatches] = useState<Match[]>([]);
+  const [selectedMatchId, setSelectedMatchId] = useState<string>('');
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
-  const [homeTeamId, setHomeTeamId] = useState<string>('');
-  const [awayTeamId, setAwayTeamId] = useState<string>('');
   const [homeScore, setHomeScore] = useState<number>(0);
   const [awayScore, setAwayScore] = useState<number>(0);
   const [stats, setStats] = useState<MatchStats>({});
 
   useEffect(() => {
-    async function loadTeams() {
-      const result = await getTeams();
-      if (result.success && result.data) {
-        setTeams(result.data);
-        if (result.data.length >= 2) {
-          setHomeTeamId(result.data[0].id);
-          setAwayTeamId(result.data[1].id);
+    async function loadData() {
+      setLoading(true);
+      try {
+        const [teamsResult, matchesResult] = await Promise.all([
+          getTeams(),
+          getAllScheduledMatches()
+        ]);
+
+        if (teamsResult.success && teamsResult.data) {
+          setTeams(teamsResult.data);
         }
+
+        if (matchesResult.success && matchesResult.data) {
+          setScheduledMatches(matchesResult.data);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
-    loadTeams();
+    loadData();
   }, []);
 
-  const homeTeam = teams.find(t => t.id === homeTeamId);
-  const awayTeam = teams.find(t => t.id === awayTeamId);
+  // Derived state based on selected match
+  const selectedMatch = scheduledMatches.find(m => m.id === selectedMatchId);
+  const homeTeam = selectedMatch ? teams.find(t => t.id === selectedMatch.homeTeamId) : null;
+  const awayTeam = selectedMatch ? teams.find(t => t.id === selectedMatch.awayTeamId) : null;
 
   const getPlayerStats = (playerId: string): PlayerStats => {
     return stats[playerId] || { goals: 0, fouls: 0, yellowCards: 0, redCards: 0, blueCards: 0 };
@@ -86,17 +109,14 @@ export default function ResultadosPage() {
   };
 
   const handleSave = async () => {
-    if (!homeTeam || !awayTeam) return;
-    if (homeTeamId === awayTeamId) {
-      alert('Por favor selecciona equipos diferentes');
-      return;
-    }
+    if (!selectedMatch || !homeTeam || !awayTeam) return;
 
     setSaving(true);
     try {
       const result = await saveMatchResult({
-        homeTeamId,
-        awayTeamId,
+        matchId: selectedMatch.id,
+        homeTeamId: homeTeam.id,
+        awayTeamId: awayTeam.id,
         homeScore,
         awayScore,
         playerStats: stats
@@ -104,7 +124,9 @@ export default function ResultadosPage() {
 
       if (result.success) {
         alert('Resultado guardado correctamente');
-        // Reset form or redirect
+        // Remove the processed match from the list
+        setScheduledMatches(prev => prev.filter(m => m.id !== selectedMatch.id));
+        setSelectedMatchId('');
         setHomeScore(0);
         setAwayScore(0);
         setStats({});
@@ -176,7 +198,7 @@ export default function ResultadosPage() {
   };
 
   if (loading) {
-    return <div className={styles.container}>Cargando equipos...</div>;
+    return <div className={styles.container}>Cargando información...</div>;
   }
 
   return (
@@ -186,96 +208,110 @@ export default function ResultadosPage() {
         <p className={styles.subtitle}>Panel Oficial de Control de Partidos</p>
       </header>
 
-      {teams.length < 2 ? (
-        <div className={styles.glassPanel}>
-          <p>Se necesitan al menos 2 equipos registrados para gestionar resultados.</p>
+      {scheduledMatches.length === 0 ? (
+        <div className={styles.glassPanel} style={{ textAlign: 'center', padding: '3rem' }}>
+          <i className="fas fa-calendar-times" style={{ fontSize: '3rem', color: '#9ca3af', marginBottom: '1rem' }}></i>
+          <h2>No hay partidos programados</h2>
+          <p style={{ color: '#9ca3af' }}>
+            Para gestionar resultados, primero debes programar partidos en el módulo de 
+            <a href="/dashboard/programacion" style={{ color: '#60a5fa', marginLeft: '5px', textDecoration: 'none' }}>Programación</a>.
+          </p>
         </div>
       ) : (
         <>
-          {/* General Match Info */}
           <section className={styles.glassPanel}>
-            <div className={styles.matchControl}>
-              <div className={styles.teamSelect}>
-                <label className={styles.label}>
-                  <i className="fas fa-home"></i> Equipo Local
-                </label>
-                <select 
-                  className={styles.select} 
-                  value={homeTeamId} 
-                  onChange={(e) => setHomeTeamId(e.target.value)}
-                >
-                  {teams.map(team => (
-                    <option key={team.id} value={team.id} disabled={team.id === awayTeamId}>
-                      {team.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className={styles.scoreBoard}>
-                <input 
-                  type="number" 
-                  className={styles.scoreInput} 
-                  value={homeScore}
-                  onChange={(e) => setHomeScore(Math.max(0, parseInt(e.target.value) || 0))}
-                />
-                <span className={styles.vs}>VS</span>
-                <input 
-                  type="number" 
-                  className={styles.scoreInput} 
-                  value={awayScore}
-                  onChange={(e) => setAwayScore(Math.max(0, parseInt(e.target.value) || 0))}
-                />
-              </div>
-
-              <div className={styles.teamSelect}>
-                <label className={styles.label}>
-                  <i className="fas fa-plane"></i> Equipo Visitante
-                </label>
-                <select 
-                  className={styles.select} 
-                  value={awayTeamId} 
-                  onChange={(e) => setAwayTeamId(e.target.value)}
-                >
-                  {teams.map(team => (
-                    <option key={team.id} value={team.id} disabled={team.id === homeTeamId}>
-                      {team.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className={styles.matchSelector}>
+              <label className={styles.label}>Seleccionar Partido a Jugar:</label>
+              <select 
+                className={styles.select}
+                value={selectedMatchId}
+                onChange={(e) => {
+                  setSelectedMatchId(e.target.value);
+                  setHomeScore(0);
+                  setAwayScore(0);
+                  setStats({});
+                }}
+              >
+                <option value="">-- Seleccione un partido --</option>
+                {scheduledMatches.map(match => (
+                  <option key={match.id} value={match.id}>
+                    {match.homeTeam.name} vs {match.awayTeam.name} - {match.date ? new Date(match.date).toLocaleDateString() : 'Pendiente'} ({match.phase})
+                  </option>
+                ))}
+              </select>
             </div>
           </section>
 
-          {/* Detailed Stats */}
-          <div className={styles.teamsContainer}>
-            {/* Home Team Column */}
-            <div className={styles.teamColumn}>
-              <div className={styles.teamHeader}>
-                <h2>{homeTeam?.name}</h2>
-              </div>
-              {homeTeam?.players.map(renderPlayerCard)}
-            </div>
+          {selectedMatch && homeTeam && awayTeam && (
+            <>
+              {/* Score Control */}
+              <section className={styles.glassPanel}>
+                <div className={styles.matchControl}>
+                  <div className={styles.teamNameDisplay}>
+                    <i className="fas fa-home"></i> {homeTeam.name}
+                  </div>
 
-            {/* Away Team Column */}
-            <div className={styles.teamColumn}>
-              <div className={styles.teamHeader}>
-                <h2>{awayTeam?.name}</h2>
-              </div>
-              {awayTeam?.players.map(renderPlayerCard)}
-            </div>
-          </div>
+                  <div className={styles.scoreBoard}>
+                    <input 
+                      type="number" 
+                      className={styles.scoreInput} 
+                      value={homeScore}
+                      onChange={(e) => setHomeScore(Math.max(0, parseInt(e.target.value) || 0))}
+                    />
+                    <span className={styles.vs}>VS</span>
+                    <input 
+                      type="number" 
+                      className={styles.scoreInput} 
+                      value={awayScore}
+                      onChange={(e) => setAwayScore(Math.max(0, parseInt(e.target.value) || 0))}
+                    />
+                  </div>
 
-          <div className={styles.actions}>
-            <Button 
-              onClick={handleSave} 
-              variant="primary" 
-              size="large"
-              disabled={saving}
-            >
-              {saving ? 'Guardando...' : 'Guardar Resultado Oficial'}
-            </Button>
-          </div>
+                  <div className={styles.teamNameDisplay}>
+                    {awayTeam.name} <i className="fas fa-plane"></i>
+                  </div>
+                </div>
+              </section>
+
+              {/* Detailed Stats */}
+              <div className={styles.teamsContainer}>
+                {/* Home Team Column */}
+                <div className={styles.teamColumn}>
+                  <div className={styles.teamHeader}>
+                    <h2>{homeTeam.name}</h2>
+                  </div>
+                  {homeTeam.players.length > 0 ? (
+                    homeTeam.players.map(renderPlayerCard)
+                  ) : (
+                    <p className={styles.noPlayers}>No hay jugadores registrados</p>
+                  )}
+                </div>
+
+                {/* Away Team Column */}
+                <div className={styles.teamColumn}>
+                  <div className={styles.teamHeader}>
+                    <h2>{awayTeam.name}</h2>
+                  </div>
+                  {awayTeam.players.length > 0 ? (
+                    awayTeam.players.map(renderPlayerCard)
+                  ) : (
+                    <p className={styles.noPlayers}>No hay jugadores registrados</p>
+                  )}
+                </div>
+              </div>
+
+              <div className={styles.actions}>
+                <Button 
+                  onClick={handleSave} 
+                  variant="primary" 
+                  size="large"
+                  disabled={saving}
+                >
+                  {saving ? 'Guardando...' : 'Finalizar Partido y Guardar'}
+                </Button>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
