@@ -264,7 +264,7 @@ interface MatchResultData {
 
 export async function saveMatchResult(data: MatchResultData) {
   try {
-    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Crear o Actualizar el partido
       let match;
       if (data.matchId) {
@@ -374,6 +374,13 @@ export async function saveMatchResult(data: MatchResultData) {
 
       return { success: true as const, data: match };
     });
+    
+    revalidatePath('/dashboard/resultados');
+    revalidatePath('/dashboard/partidos-jugados');
+    revalidatePath('/dashboard/programacion');
+    revalidatePath('/');
+    
+    return result;
   } catch (error) {
     console.error('Error saving match result:', error);
     return { success: false as const, error: 'Error al guardar el resultado del partido.' };
@@ -728,5 +735,149 @@ export async function generateNextPhase() {
   } catch (error) {
     console.error('Error generating next phase:', error);
     return { success: false as const, error: 'Error al generar la siguiente fase.' };
+  }
+}
+
+export async function getPlayedMatches() {
+  try {
+    const matches = await prisma.match.findMany({
+      where: { status: 'PLAYED' },
+      include: { homeTeam: true, awayTeam: true },
+      orderBy: { date: 'desc' }
+    });
+    return { success: true as const, data: matches };
+  } catch (error) {
+    console.error('Error fetching played matches:', error);
+    return { success: false as const, error: 'Error al obtener partidos jugados' };
+  }
+}
+
+export async function updateMatchScore(matchId: string, newHomeScore: number, newAwayScore: number) {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const match = await tx.match.findUnique({ where: { id: matchId } });
+      if (!match) throw new Error('Partido no encontrado');
+      
+      const oldHomeScore = match.homeScore || 0;
+      const oldAwayScore = match.awayScore || 0;
+
+      // 1. Revertir estadísticas anteriores
+      let oldHomePoints = 0;
+      let oldAwayPoints = 0;
+      if (oldHomeScore > oldAwayScore) { oldHomePoints = 3; oldAwayPoints = 0; }
+      else if (oldHomeScore === oldAwayScore) { oldHomePoints = 1; oldAwayPoints = 1; }
+      else { oldHomePoints = 0; oldAwayPoints = 3; }
+
+      await tx.teamStats.update({
+        where: { teamId: match.homeTeamId },
+        data: {
+          goalsFor: { decrement: oldHomeScore },
+          goalsAgainst: { decrement: oldAwayScore },
+          goalDifference: { decrement: oldHomeScore - oldAwayScore },
+          points: { decrement: oldHomePoints },
+          won: { decrement: oldHomePoints === 3 ? 1 : 0 },
+          drawn: { decrement: oldHomePoints === 1 ? 1 : 0 },
+          lost: { decrement: oldHomePoints === 0 ? 1 : 0 },
+        }
+      });
+
+      await tx.teamStats.update({
+        where: { teamId: match.awayTeamId },
+        data: {
+          goalsFor: { decrement: oldAwayScore },
+          goalsAgainst: { decrement: oldHomeScore },
+          goalDifference: { decrement: oldAwayScore - oldHomeScore },
+          points: { decrement: oldAwayPoints },
+          won: { decrement: oldAwayPoints === 3 ? 1 : 0 },
+          drawn: { decrement: oldAwayPoints === 1 ? 1 : 0 },
+          lost: { decrement: oldAwayPoints === 0 ? 1 : 0 },
+        }
+      });
+
+      // 2. Aplicar nuevas estadísticas
+      let newHomePoints = 0;
+      let newAwayPoints = 0;
+      if (newHomeScore > newAwayScore) { newHomePoints = 3; newAwayPoints = 0; }
+      else if (newHomeScore === newAwayScore) { newHomePoints = 1; newAwayPoints = 1; }
+      else { newHomePoints = 0; newAwayPoints = 3; }
+
+      await tx.teamStats.update({
+        where: { teamId: match.homeTeamId },
+        data: {
+          goalsFor: { increment: newHomeScore },
+          goalsAgainst: { increment: newAwayScore },
+          goalDifference: { increment: newHomeScore - newAwayScore },
+          points: { increment: newHomePoints },
+          won: { increment: newHomePoints === 3 ? 1 : 0 },
+          drawn: { increment: newHomePoints === 1 ? 1 : 0 },
+          lost: { increment: newHomePoints === 0 ? 1 : 0 },
+        }
+      });
+
+      await tx.teamStats.update({
+        where: { teamId: match.awayTeamId },
+        data: {
+          goalsFor: { increment: newAwayScore },
+          goalsAgainst: { increment: newHomeScore },
+          goalDifference: { increment: newAwayScore - newHomeScore },
+          points: { increment: newAwayPoints },
+          won: { increment: newAwayPoints === 3 ? 1 : 0 },
+          drawn: { increment: newAwayPoints === 1 ? 1 : 0 },
+          lost: { increment: newAwayPoints === 0 ? 1 : 0 },
+        }
+      });
+
+      // 3. Actualizar Partido
+      const updatedMatch = await tx.match.update({
+        where: { id: matchId },
+        data: {
+          homeScore: newHomeScore,
+          awayScore: newAwayScore
+        }
+      });
+
+      return { success: true as const, data: updatedMatch };
+    });
+    
+    revalidatePath('/dashboard/partidos-jugados');
+    revalidatePath('/');
+    revalidatePath('/dashboard/resultados');
+  } catch (error) {
+    console.error('Error updating match score:', error);
+    return { success: false as const, error: 'Error al actualizar el marcador.' };
+  }
+}
+
+export async function getCurrentPhase() {
+  try {
+    // Determinar la fase más avanzada que tiene partidos PROGRAMADOS o JUGADOS
+    // Prioridad: FINAL > SEMI_FINAL > QUARTER_FINAL > GROUP
+    
+    const matches = await prisma.match.findMany({
+      select: { phase: true, status: true }
+    });
+
+    const phases = matches.map(m => m.phase);
+    
+    if (phases.includes('FINAL')) return { success: true, data: 'FINAL' };
+    if (phases.includes('SEMI_FINAL')) return { success: true, data: 'SEMI_FINAL' };
+    if (phases.includes('QUARTER_FINAL')) return { success: true, data: 'QUARTER_FINAL' };
+    
+    return { success: true, data: 'GROUP' };
+  } catch (error) {
+    return { success: false, error: 'Error determinando la fase' };
+  }
+}
+
+export async function getMatchesByPhase(phase: string) {
+  try {
+    const matches = await prisma.match.findMany({
+      where: { phase },
+      include: { homeTeam: true, awayTeam: true },
+      orderBy: { date: 'asc' }
+    });
+    return { success: true, data: matches };
+  } catch (error) {
+    return { success: false, error: 'Error obteniendo partidos de la fase' };
   }
 }

@@ -55,6 +55,10 @@ export default function DashboardPage() {
           <h2 className={styles.cardTitle}>Programación</h2>
           <p className={styles.cardContent}>Gestionar calendario y generar cruces de fases.</p>
         </Link>
+        <Link href="/dashboard/partidos-jugados" className={styles.card}>
+          <h2 className={styles.cardTitle}>Partidos Jugados</h2>
+          <p className={styles.cardContent}>Historial de partidos y edición de resultados.</p>
+        </Link>
       </div>
     </div>
   );

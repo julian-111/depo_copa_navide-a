@@ -1,6 +1,6 @@
 import styles from './page.module.css';
 import Button from '../../components/Button/Button';
-import { getStandings, getTopScorer, getBestDefense, getUpcomingMatches } from '@/app/actions/tournament';
+import { getStandings, getTopScorer, getBestDefense, getUpcomingMatches, getCurrentPhase, getMatchesByPhase } from '@/app/actions/tournament';
 import { Prisma } from '@prisma/client';
 
 type TeamWithStats = Prisma.TeamGetPayload<{
@@ -14,6 +14,24 @@ export default async function Home() {
   const { data: topScorer } = await getTopScorer();
   const { data: bestDefense } = await getBestDefense();
   const { data: upcomingMatches } = await getUpcomingMatches();
+  const { data: currentPhase } = await getCurrentPhase();
+
+  const showStandings = !currentPhase || currentPhase === 'GROUP';
+  
+  let phaseMatches: any[] = [];
+  if (!showStandings && currentPhase) {
+    const res = await getMatchesByPhase(currentPhase);
+    if (res.success && res.data) phaseMatches = res.data;
+  }
+
+  const formatPhaseName = (phase: string) => {
+    switch(phase) {
+      case 'QUARTER_FINAL': return 'Cuartos de Final';
+      case 'SEMI_FINAL': return 'Semifinales';
+      case 'FINAL': return 'Gran Final';
+      default: return phase;
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -31,56 +49,103 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Standings Table Section */}
+      {/* Dynamic Main Section: Table or Bracket */}
       <section className={styles.section}>
         <div className={styles.tableHeader}>
-          <h2 className={styles.sectionTitle}>Tabla de Posiciones</h2>
+          <h2 className={styles.sectionTitle}>
+            {showStandings ? 'Tabla de Posiciones' : formatPhaseName(currentPhase!)}
+          </h2>
         </div>
         
-        <div className={styles.tableContainer}>
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Equipo</th>
-                  <th>PJ</th>
-                  <th>PG</th>
-                  <th>PE</th>
-                  <th>PP</th>
-                  <th>Pts</th>
-                </tr>
-              </thead>
-              <tbody>
-                {standings && standings.length > 0 ? (
-                  standings.map((team: TeamWithStats, index: number) => (
-                    <tr key={team.id}>
-                      <td>{index + 1}</td>
-                      <td className={styles.teamNameCell}>
-                        <span className={styles.teamName}>{team.name}</span>
-                      </td>
-                      <td>{team.stats?.played || 0}</td>
-                      <td>{team.stats?.won || 0}</td>
-                      <td>{team.stats?.drawn || 0}</td>
-                      <td>{team.stats?.lost || 0}</td>
-                      <td className={styles.pointsCell}>{team.stats?.points || 0}</td>
-                    </tr>
-                  ))
-                ) : (
+        {showStandings ? (
+          <div className={styles.tableContainer}>
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
                   <tr>
-                    <td colSpan={7}>
-                      <div className={styles.emptyState}>
-                        <span className={styles.emptyIcon}>❄️</span>
-                        <h3>Aún no hay equipos registrados</h3>
-                        <p>La tabla de posiciones se actualizará automáticamente cuando comience el torneo.</p>
-                      </div>
-                    </td>
+                    <th>#</th>
+                    <th>Equipo</th>
+                    <th>PJ</th>
+                    <th>PG</th>
+                    <th>PE</th>
+                    <th>PP</th>
+                    <th>Pts</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {standings && standings.length > 0 ? (
+                    standings.map((team: TeamWithStats, index: number) => (
+                      <tr key={team.id}>
+                        <td>{index + 1}</td>
+                        <td className={styles.teamNameCell}>
+                          <span className={styles.teamName}>{team.name}</span>
+                        </td>
+                        <td>{team.stats?.played || 0}</td>
+                        <td>{team.stats?.won || 0}</td>
+                        <td>{team.stats?.drawn || 0}</td>
+                        <td>{team.stats?.lost || 0}</td>
+                        <td className={styles.pointsCell}>{team.stats?.points || 0}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7}>
+                        <div className={styles.emptyState}>
+                          <span className={styles.emptyIcon}>❄️</span>
+                          <h3>Aún no hay equipos registrados</h3>
+                          <p>La tabla de posiciones se actualizará automáticamente cuando comience el torneo.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className={styles.highlightsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+            {phaseMatches.length > 0 ? phaseMatches.map((match) => (
+              <div key={match.id} className={`${styles.glass} ${styles.highlightCard}`}>
+                <div style={{ padding: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <span style={{ fontSize: '0.9rem', color: '#F8B229', fontWeight: 'bold' }}>
+                      {match.date ? new Date(match.date).toLocaleDateString() : 'TBD'}
+                    </span>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                      {match.leg ? `Partido ${match.leg}` : ''}
+                    </span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ textAlign: 'center', flex: 1 }}>
+                      <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.5rem' }}>{match.homeTeam.name}</div>
+                    </div>
+                    
+                    <div style={{ 
+                      fontWeight: '800', 
+                      fontSize: '1.8rem', 
+                      color: match.status === 'PLAYED' ? '#F8B229' : 'rgba(255,255,255,0.3)',
+                      background: 'rgba(0,0,0,0.2)',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '8px',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {match.status === 'PLAYED' ? `${match.homeScore} - ${match.awayScore}` : 'VS'}
+                    </div>
+
+                    <div style={{ textAlign: 'center', flex: 1 }}>
+                      <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.5rem' }}>{match.awayTeam.name}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )) : (
+              <div className={styles.emptyState} style={{ gridColumn: '1/-1' }}>
+                <h3>Esperando cruces...</h3>
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Tournament Highlights Section */}

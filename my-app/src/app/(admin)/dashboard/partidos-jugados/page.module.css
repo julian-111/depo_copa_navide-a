@@ -1,0 +1,148 @@
+.container {
+  padding: 2rem;
+  min-height: 100vh;
+  color: white;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: linear-gradient(to right, #F8B229, #fff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.grid {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.matchCard {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.matchInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  justify-content: center;
+  min-width: 300px;
+}
+
+.teamName {
+  font-weight: bold;
+  font-size: 1.1rem;
+  width: 150px;
+  text-align: center;
+}
+
+.score {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #F8B229;
+  background: rgba(0,0,0,0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.vs {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.9rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editBtn, .saveBtn, .cancelBtn {
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.editBtn {
+  background: rgba(255,255,255,0.1);
+  color: white;
+}
+.editBtn:hover { background: rgba(255,255,255,0.2); }
+
+.saveBtn {
+  background: #22c55e;
+  color: white;
+}
+.saveBtn:hover { background: #16a34a; }
+
+.cancelBtn {
+  background: #ef4444;
+  color: white;
+}
+.cancelBtn:hover { background: #dc2626; }
+
+.input {
+  width: 60px;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(0,0,0,0.4);
+  color: white;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.date {
+  position: absolute;
+  top: 10px;
+  left: 15px;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.4);
+}
+
+.phase {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 0.8rem;
+  color: #F8B229;
+  font-weight: bold;
+}
+
+@media (max-width: 600px) {
+  .matchCard {
+    flex-direction: column;
+    text-align: center;
+  }
+  .matchInfo {
+    flex-direction: column;
+    width: 100%;
+  }
+  .teamName {
+    width: 100%;
+    text-align: center !important;
+  }
+}
