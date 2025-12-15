@@ -3,13 +3,31 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './page.module.css';
-import { getPlayedMatches, updateMatchScore } from '@/app/actions/tournament';
+import { getPlayedMatches } from '@/app/actions/tournament';
+import EditMatchModal from '@/components/EditMatchModal/EditMatchModal';
+
+interface Team {
+  id: string;
+  name: string;
+}
+
+interface Match {
+  id: string;
+  date: string | Date | null;
+  phase: string;
+  homeTeam: Team;
+  awayTeam: Team;
+  homeScore: number | null;
+  awayScore: number | null;
+}
 
 export default function PartidosJugadosPage() {
-  const [matches, setMatches] = useState<any[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [scores, setScores] = useState({ home: 0, away: 0 });
+  
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
 
   useEffect(() => {
     loadMatches();
@@ -24,26 +42,18 @@ export default function PartidosJugadosPage() {
     setLoading(false);
   }
 
-  const handleEdit = (match: any) => {
-    setEditingId(match.id);
-    setScores({ home: match.homeScore, away: match.awayScore });
+  const handleEdit = (matchId: string) => {
+    setSelectedMatchId(matchId);
+    setIsModalOpen(true);
   };
 
-  const handleCancel = () => {
-    setEditingId(null);
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedMatchId(null);
   };
 
-  const handleSave = async (matchId: string) => {
-    if (confirm('¿Estás seguro de actualizar este resultado? Esto recalculará la tabla de posiciones.')) {
-      const result = await updateMatchScore(matchId, scores.home, scores.away);
-      if (result.success) {
-        alert('Marcador actualizado correctamente');
-        setEditingId(null);
-        loadMatches();
-      } else {
-        alert(result.error || 'Error al actualizar');
-      }
-    }
+  const handleModalSave = () => {
+    loadMatches(); // Reload matches to show updated scores
   };
 
   return (
@@ -64,7 +74,7 @@ export default function PartidosJugadosPage() {
       ) : (
         <div className={styles.grid}>
           {matches.map(match => (
-            <div key={match.id} className={styles.matchCard} style={{ position: 'relative' }}>
+            <div key={match.id} className={styles.matchCard}>
               <span className={styles.date}>
                 {match.date ? new Date(match.date).toLocaleDateString() : 'Fecha por definir'}
               </span>
@@ -73,44 +83,28 @@ export default function PartidosJugadosPage() {
               <div className={styles.matchInfo}>
                 <span className={styles.teamName} style={{ textAlign: 'right' }}>{match.homeTeam.name}</span>
                 
-                {editingId === match.id ? (
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <input 
-                      type="number" 
-                      className={styles.input} 
-                      value={scores.home}
-                      onChange={(e) => setScores({...scores, home: parseInt(e.target.value) || 0})}
-                    />
-                    <span>-</span>
-                    <input 
-                      type="number" 
-                      className={styles.input} 
-                      value={scores.away}
-                      onChange={(e) => setScores({...scores, away: parseInt(e.target.value) || 0})}
-                    />
-                  </div>
-                ) : (
-                  <div className={styles.score}>
-                    {match.homeScore} - {match.awayScore}
-                  </div>
-                )}
+                <div className={styles.score}>
+                  {match.homeScore} - {match.awayScore}
+                </div>
                 
                 <span className={styles.teamName} style={{ textAlign: 'left' }}>{match.awayTeam.name}</span>
               </div>
 
               <div className={styles.actions}>
-                {editingId === match.id ? (
-                  <>
-                    <button className={styles.saveBtn} onClick={() => handleSave(match.id)}>✓</button>
-                    <button className={styles.cancelBtn} onClick={handleCancel}>✕</button>
-                  </>
-                ) : (
-                  <button className={styles.editBtn} onClick={() => handleEdit(match)}>✎ Editar</button>
-                )}
+                <button className={styles.editBtn} onClick={() => handleEdit(match.id)}>✎ Editar Completo</button>
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {selectedMatchId && (
+        <EditMatchModal 
+          matchId={selectedMatchId} 
+          isOpen={isModalOpen} 
+          onClose={handleModalClose}
+          onSave={handleModalSave}
+        />
       )}
     </div>
   );
