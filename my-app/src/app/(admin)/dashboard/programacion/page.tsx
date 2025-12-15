@@ -75,12 +75,16 @@ export default function ProgramacionPage() {
       return;
     }
 
-    if (!formData.date || !formData.time) {
-      alert('Debes seleccionar fecha y hora.');
-      return;
+    let dateTime: Date | null = null;
+    
+    // Si se proporciona fecha u hora, ambas deben estar presentes
+    if (formData.date || formData.time) {
+      if (!formData.date || !formData.time) {
+        alert('Para programar con fecha, debes indicar tanto el día como la hora.');
+        return;
+      }
+      dateTime = new Date(`${formData.date}T${formData.time}`);
     }
-
-    const dateTime = new Date(`${formData.date}T${formData.time}`);
 
     const result = await scheduleMatch({
       homeTeamId: formData.homeTeamId,
@@ -218,7 +222,6 @@ export default function ProgramacionPage() {
                 value={formData.date} 
                 onChange={handleChange}
                 className={styles.input}
-                required
               />
             </div>
 
@@ -230,7 +233,6 @@ export default function ProgramacionPage() {
                 value={formData.time} 
                 onChange={handleChange}
                 className={styles.input}
-                required
               />
             </div>
 

@@ -451,7 +451,7 @@ export async function getUpcomingMatches() {
 interface ScheduleMatchData {
   homeTeamId: string;
   awayTeamId: string;
-  date: Date;
+  date?: Date | null;
   phase: string; // 'GROUP', 'QUARTER_FINAL', 'SEMI_FINAL', 'FINAL'
 }
 
