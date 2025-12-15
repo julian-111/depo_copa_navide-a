@@ -47,6 +47,10 @@ export default function DashboardPage() {
           <h2 className={styles.cardTitle}>Resultados</h2>
           <p className={styles.cardContent}>Actualiza marcadores y estadísticas de los partidos.</p>
         </Link>
+        <Link href="/dashboard/equipos-registrados" className={styles.card}>
+          <h2 className={styles.cardTitle}>Equipos Registrados</h2>
+          <p className={styles.cardContent}>Ver lista completa de equipos y sus detalles.</p>
+        </Link>
       </div>
     </div>
   );
