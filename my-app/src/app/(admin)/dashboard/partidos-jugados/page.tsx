@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import styles from './page.module.css';
 import { getPlayedMatches } from '@/app/actions/tournament';
@@ -29,18 +29,18 @@ export default function PartidosJugadosPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadMatches();
-  }, []);
-
-  async function loadMatches() {
+  const loadMatches = useCallback(async () => {
     setLoading(true);
     const result = await getPlayedMatches();
     if (result.success && result.data) {
       setMatches(result.data);
     }
     setLoading(false);
-  }
+  }, []);
+
+  useEffect(() => {
+    loadMatches();
+  }, [loadMatches]);
 
   const handleEdit = (matchId: string) => {
     setSelectedMatchId(matchId);

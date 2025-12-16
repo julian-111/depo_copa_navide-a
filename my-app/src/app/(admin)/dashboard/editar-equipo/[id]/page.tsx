@@ -31,40 +31,40 @@ export default function EditarEquipoPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    async function fetchTeamData(id: string) {
+      try {
+        const result = await getTeamById(id);
+        if (result.success && result.data) {
+          const team = result.data;
+          setFormData({
+            nombreEquipo: team.name,
+            entrenador: team.coach,
+            telefono: team.phone,
+            email: team.email || '',
+            categoria: team.category || 'Unica'
+          });
+          
+          setPlayers(team.players.map((p: { id: string, name: string, number: number }) => ({
+            id: p.id,
+            name: p.name,
+            number: p.number.toString()
+          })));
+        } else {
+          alert('Error al cargar los datos del equipo');
+          router.push('/dashboard/equipos-registrados');
+        }
+      } catch (error) {
+        console.error('Error fetching team:', error);
+        alert('Error al cargar los datos del equipo');
+      } finally {
+        setLoading(false);
+      }
+    }
+
     if (teamId) {
       fetchTeamData(teamId);
     }
-  }, [teamId]);
-
-  async function fetchTeamData(id: string) {
-    try {
-      const result = await getTeamById(id);
-      if (result.success && result.data) {
-        const team = result.data;
-        setFormData({
-          nombreEquipo: team.name,
-          entrenador: team.coach,
-          telefono: team.phone,
-          email: team.email || '',
-          categoria: team.category || 'Unica'
-        });
-        
-        setPlayers(team.players.map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          number: p.number.toString()
-        })));
-      } else {
-        alert('Error al cargar los datos del equipo');
-        router.push('/dashboard/equipos-registrados');
-      }
-    } catch (error) {
-      console.error('Error fetching team:', error);
-      alert('Error al cargar los datos del equipo');
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [teamId, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

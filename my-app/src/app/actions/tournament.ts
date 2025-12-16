@@ -450,7 +450,7 @@ export async function saveMatchResult(data: MatchResultData) {
 
 export async function getTopScorer() {
   try {
-    const topScorer = await prisma.player.findFirst({
+    const topScorers = await prisma.player.findMany({
       orderBy: {
         goals: 'desc',
       },
@@ -459,20 +459,20 @@ export async function getTopScorer() {
       },
       where: {
         goals: {
-          gt: 0
+          gte: 5
         }
       }
     });
-    return { success: true as const, data: topScorer };
+    return { success: true as const, data: topScorers };
   } catch (error) {
-    console.error('Error fetching top scorer:', error);
-    return { success: false as const, error: 'Error al obtener el goleador.' };
+    console.error('Error fetching top scorers:', error);
+    return { success: false as const, error: 'Error al obtener los goleadores.' };
   }
 }
 
 export async function getBestDefense() {
   try {
-    const bestDefense = await prisma.teamStats.findFirst({
+    const bestDefenses = await prisma.teamStats.findMany({
       orderBy: {
         goalsAgainst: 'asc',
       },
@@ -480,15 +480,18 @@ export async function getBestDefense() {
         team: true,
       },
       where: {
+        goalsAgainst: {
+          lt: 20
+        },
         played: {
           gt: 0
         }
       }
     });
-    return { success: true as const, data: bestDefense };
+    return { success: true as const, data: bestDefenses };
   } catch (error) {
-    console.error('Error fetching best defense:', error);
-    return { success: false as const, error: 'Error al obtener la valla menos vencida.' };
+    console.error('Error fetching best defenses:', error);
+    return { success: false as const, error: 'Error al obtener las vallas menos vencidas.' };
   }
 }
 
@@ -505,7 +508,6 @@ export async function getUpcomingMatches() {
       orderBy: {
         date: 'asc',
       },
-      take: 3,
     });
     return { success: true as const, data: matches };
   } catch (error) {

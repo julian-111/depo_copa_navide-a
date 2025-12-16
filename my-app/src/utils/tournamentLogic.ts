@@ -240,7 +240,7 @@ export function generateSemiFinals(
   // Match A: Team 0 vs Team 1
   // Match B: Team 2 vs Team 3
   // If custom pairings provided:
-  let pairings: [Team, Team][] = [];
+  const pairings: [Team, Team][] = [];
 
   if (config.manualPairing && config.customPairings) {
     // Map IDs to Team objects

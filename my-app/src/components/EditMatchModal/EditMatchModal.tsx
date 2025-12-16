@@ -58,42 +58,42 @@ interface PlayerStat {
     const [playerStats, setPlayerStats] = useState<Record<string, PlayerStat>>({});
 
   useEffect(() => {
+    async function loadMatchDetails() {
+      setLoading(true);
+      const result = await getMatchDetails(matchId);
+      
+      if (result.success && result.data) {
+        const match = result.data;
+        setMatchData(match);
+        setHomeScore(match.homeScore || 0);
+        setAwayScore(match.awayScore || 0);
+
+        // Initialize stats map
+        const statsMap: Record<string, PlayerStat> = {};
+        
+        // Pre-fill with existing stats
+        match.playerStats.forEach((stat) => {
+          statsMap[stat.playerId] = {
+            goals: stat.goals,
+            fouls: stat.fouls,
+            yellowCards: stat.yellowCards,
+            redCards: stat.redCards,
+            blueCards: stat.blueCards,
+          };
+        });
+
+        setPlayerStats(statsMap);
+      } else {
+        alert('Error al cargar los detalles del partido');
+        onClose();
+      }
+      setLoading(false);
+    }
+
     if (isOpen && matchId) {
       loadMatchDetails();
     }
-  }, [isOpen, matchId]);
-
-  async function loadMatchDetails() {
-    setLoading(true);
-    const result = await getMatchDetails(matchId);
-    
-    if (result.success && result.data) {
-      const match = result.data;
-      setMatchData(match);
-      setHomeScore(match.homeScore || 0);
-      setAwayScore(match.awayScore || 0);
-
-      // Initialize stats map
-      const statsMap: Record<string, PlayerStat> = {};
-      
-      // Pre-fill with existing stats
-      match.playerStats.forEach((stat) => {
-        statsMap[stat.playerId] = {
-          goals: stat.goals,
-          fouls: stat.fouls,
-          yellowCards: stat.yellowCards,
-          redCards: stat.redCards,
-          blueCards: stat.blueCards,
-        };
-      });
-
-      setPlayerStats(statsMap);
-    } else {
-      alert('Error al cargar los detalles del partido');
-      onClose();
-    }
-    setLoading(false);
-  }
+  }, [isOpen, matchId, onClose]);
 
   const handleStatChange = (playerId: string, field: keyof PlayerStat, value: string) => {
     const numValue = parseInt(value) || 0;

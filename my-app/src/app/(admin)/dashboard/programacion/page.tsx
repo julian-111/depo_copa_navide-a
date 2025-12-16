@@ -50,7 +50,7 @@ export default function ProgramacionPage() {
       }
       
       if (matchesResult.success && matchesResult.data) {
-        setScheduledMatches(matchesResult.data as any);
+        setScheduledMatches(matchesResult.data as unknown as Match[]);
       }
     } catch (error) {
       console.error('Error fetching data:', error);

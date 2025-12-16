@@ -9,16 +9,23 @@ type TeamWithStats = Prisma.TeamGetPayload<{
   };
 }>;
 
+type MatchWithTeams = Prisma.MatchGetPayload<{
+  include: {
+    homeTeam: true;
+    awayTeam: true;
+  };
+}>;
+
 export default async function Home() {
   const { data: standings } = await getStandings();
-  const { data: topScorer } = await getTopScorer();
-  const { data: bestDefense } = await getBestDefense();
+  const { data: topScorers } = await getTopScorer();
+  const { data: bestDefenses } = await getBestDefense();
   const { data: upcomingMatches } = await getUpcomingMatches();
   const { data: currentPhase } = await getCurrentPhase();
 
   const showStandings = !currentPhase || currentPhase === 'GROUP';
   
-  let phaseMatches: any[] = [];
+  let phaseMatches: MatchWithTeams[] = [];
   if (!showStandings && currentPhase) {
     const res = await getMatchesByPhase(currentPhase);
     if (res.success && res.data) phaseMatches = res.data;
@@ -153,17 +160,25 @@ export default async function Home() {
         <div className={styles.highlightsGrid}>
           {/* Goleador */}
           <div className={`${styles.glass} ${styles.highlightCard}`}>
-            <h3 className={styles.highlightTitle}>Goleador del Torneo</h3>
-            <div className={styles.highlightContent}>
-              <span className={styles.highlightIcon}>⚽</span>
-              {topScorer ? (
-                <>
-                  <p className={styles.highlightName}>{topScorer.name}</p>
-                  <p className={styles.highlightSubtext}>{topScorer.team?.name}</p>
-                  <p className={styles.highlightStat}>{topScorer.goals} Goles</p>
-                </>
+            <h3 className={styles.highlightTitle}>Goleadores del Torneo</h3>
+            <div className={styles.matchesList} style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              {topScorers && topScorers.length > 0 ? (
+                topScorers.map((scorer, index) => (
+                  <div key={scorer.id} className={styles.matchItem} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontWeight: 'bold', color: '#F8B229', width: '20px' }}>#{index + 1}</span>
+                      <div>
+                        <div style={{ fontWeight: 'bold' }}>{scorer.name}</div>
+                        <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>{scorer.team?.name}</div>
+                      </div>
+                    </div>
+                    <span className={styles.highlightStat} style={{ fontSize: '1rem' }}>{scorer.goals} ⚽</span>
+                  </div>
+                ))
               ) : (
-                <p className={styles.noData}>Aún no hay registros</p>
+                <div className={styles.highlightContent}>
+                  <p className={styles.noData}>Aún no hay jugadores con 5+ goles</p>
+                </div>
               )}
             </div>
           </div>
@@ -171,15 +186,21 @@ export default async function Home() {
           {/* Valla menos vencida */}
           <div className={`${styles.glass} ${styles.highlightCard}`}>
             <h3 className={styles.highlightTitle}>Valla Menos Vencida</h3>
-            <div className={styles.highlightContent}>
-              <span className={styles.highlightIcon}>🛡️</span>
-              {bestDefense ? (
-                <>
-                  <p className={styles.highlightName}>{bestDefense.team?.name}</p>
-                  <p className={styles.highlightStat}>{bestDefense.goalsAgainst} Goles en contra</p>
-                </>
+            <div className={styles.matchesList} style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              {bestDefenses && bestDefenses.length > 0 ? (
+                bestDefenses.map((defense, index) => (
+                  <div key={defense.id} className={styles.matchItem} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontWeight: 'bold', color: '#F8B229', width: '20px' }}>#{index + 1}</span>
+                      <div style={{ fontWeight: 'bold' }}>{defense.team?.name}</div>
+                    </div>
+                    <span className={styles.highlightStat} style={{ fontSize: '1rem' }}>{defense.goalsAgainst} 🛡️</span>
+                  </div>
+                ))
               ) : (
-                <p className={styles.noData}>Aún no hay registros</p>
+                <div className={styles.highlightContent}>
+                  <p className={styles.noData}>Aún no hay vallas con &lt;20 goles</p>
+                </div>
               )}
             </div>
           </div>
@@ -197,7 +218,13 @@ export default async function Home() {
                       <span>{match.awayTeam.name}</span>
                     </div>
                     <span className={styles.matchDate}>
-                      {match.date ? new Date(match.date).toLocaleDateString() : 'Fecha por definir'}
+                      {match.date ? new Date(match.date).toLocaleString('es-ES', {
+                        weekday: 'short',
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) : 'Fecha por definir'}
                     </span>
                   </div>
                 ))

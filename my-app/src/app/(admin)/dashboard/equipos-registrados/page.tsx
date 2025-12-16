@@ -12,7 +12,7 @@ interface Team {
   coach: string;
   phone: string;
   category: string;
-  players: any[];
+  players: { id: string; name: string; number: number }[];
 }
 
 export default function RegisteredTeamsPage() {
@@ -154,7 +154,7 @@ export default function RegisteredTeamsPage() {
               <h3 style={{ color: '#9ca3af', marginBottom: '1rem' }}>Lista de Jugadores</h3>
               {inspectTeam.players.length > 0 ? (
                 <ul className={styles.playerList}>
-                  {inspectTeam.players.map((player: any) => (
+                  {inspectTeam.players.map((player) => (
                     <li key={player.id} className={styles.playerItem}>
                       <span>
                         <span className={styles.playerNumber}>{player.number}</span>
