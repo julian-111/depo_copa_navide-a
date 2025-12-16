@@ -218,13 +218,14 @@ export default async function Home() {
                       <span>{match.awayTeam.name}</span>
                     </div>
                     <span className={styles.matchDate}>
-                      {match.date ? new Date(match.date).toLocaleString('es-ES', {
+                      {match.date ? new Date(match.date).toLocaleString('es-CO', {
                         weekday: 'short',
                         day: 'numeric',
                         month: 'short',
                         hour: 'numeric',
                         minute: '2-digit',
-                        hour12: true
+                        hour12: true,
+                        timeZone: 'America/Bogota'
                       }) : 'Fecha por definir'}
                     </span>
                   </div>
