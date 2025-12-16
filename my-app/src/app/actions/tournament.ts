@@ -481,7 +481,7 @@ export async function getBestDefense() {
       },
       where: {
         goalsAgainst: {
-          lt: 20
+          lte: 45
         },
         played: {
           gt: 0

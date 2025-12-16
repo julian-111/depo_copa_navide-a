@@ -199,7 +199,7 @@ export default async function Home() {
                 ))
               ) : (
                 <div className={styles.highlightContent}>
-                  <p className={styles.noData}>Aún no hay vallas con &lt;20 goles</p>
+                  <p className={styles.noData}>Aún no hay vallas con &lt;=45 goles</p>
                 </div>
               )}
             </div>
