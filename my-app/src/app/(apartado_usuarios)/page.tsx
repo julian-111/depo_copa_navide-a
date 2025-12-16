@@ -222,8 +222,9 @@ export default async function Home() {
                         weekday: 'short',
                         day: 'numeric',
                         month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit'
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
                       }) : 'Fecha por definir'}
                     </span>
                   </div>
