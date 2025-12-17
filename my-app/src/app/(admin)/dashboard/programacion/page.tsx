@@ -274,8 +274,15 @@ export default function ProgramacionPage() {
                     <div className={styles.meta}>
                       <span className={styles.phase}>{formatPhase(match.phase)}</span>
                       <span className={styles.date}>
-                        {match.date ? new Date(match.date).toLocaleDateString() : 'TBD'} - 
-                        {match.date ? new Date(match.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                        {match.date ? new Date(match.date).toLocaleString('es-CO', {
+                          weekday: 'short',
+                          day: 'numeric',
+                          month: 'short',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true,
+                          timeZone: 'America/Bogota'
+                        }) : 'TBD'}
                       </span>
                     </div>
                     <div className={`${styles.team} ${styles.home}`}>{match.homeTeam.name}</div>

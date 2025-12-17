@@ -125,12 +125,13 @@ export async function getStandings() {
     type TeamWithStats = Prisma.TeamGetPayload<{ include: { stats: true } }>;
     
     const sortedTeams = teams.sort((a: TeamWithStats, b: TeamWithStats) => {
-      const statsA = a.stats || { points: 0, goalDifference: 0, goalsFor: 0 };
-      const statsB = b.stats || { points: 0, goalDifference: 0, goalsFor: 0 };
+      const statsA = a.stats || { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0 };
+      const statsB = b.stats || { points: 0, goalDifference: 0, goalsFor: 0, goalsAgainst: 0 };
 
       if (statsB.points !== statsA.points) return statsB.points - statsA.points;
       if (statsB.goalDifference !== statsA.goalDifference) return statsB.goalDifference - statsA.goalDifference;
-      return statsB.goalsFor - statsA.goalsFor;
+      // Menos goles en contra es mejor
+      return statsA.goalsAgainst - statsB.goalsAgainst;
     });
 
     return { success: true as const, data: sortedTeams };
