@@ -122,48 +122,61 @@
   background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.01));
   border-radius: 24px;
   overflow: hidden;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36);
+  backdrop-filter: blur(4px);
 }
 
 .tableWrapper {
-  background: #111827;
+  background: rgba(17, 24, 39, 0.7); /* Semi-transparent dark */
   border-radius: 23px;
   overflow-x: auto;
   width: 100%;
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  padding: 1rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem; /* Spacing between rows */
   white-space: nowrap;
 }
 
-.table th,
-.table td {
-  padding: 1.25rem 1rem;
-  text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
 .table th {
-  background: rgba(255, 255, 255, 0.02);
+  padding: 1rem;
+  text-align: center;
   color: #9ca3af;
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.875rem;
   letter-spacing: 0.05em;
-}
-
-.table tr:last-child td {
-  border-bottom: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .table tbody tr {
-  transition: background-color 0.2s ease;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.2s ease;
 }
 
 .table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.08);
+  transform: scale(1.01);
+}
+
+.table td {
+  padding: 1rem;
+  text-align: center;
+  color: #e5e7eb;
+}
+
+.table td:first-child {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.table td:last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
 }
 
 .teamNameCell {
@@ -180,8 +193,73 @@
 
 .pointsCell {
   font-weight: 800;
-  color: #10b981;
-  font-size: 1.1rem;
+  color: #F8B229;
+  font-size: 1.2rem;
+  text-shadow: 0 0 10px rgba(248, 178, 41, 0.3);
+}
+
+/* Mobile Card View for Table */
+@media screen and (max-width: 768px) {
+  .table thead {
+    display: none;
+  }
+
+  .table, .table tbody, .table tr, .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table tr {
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .table td {
+    text-align: right;
+    padding: 0.5rem 0;
+    position: relative;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .table td:last-child {
+    border-bottom: none;
+  }
+
+  /* Reset border radius for td in mobile */
+  .table td:first-child,
+  .table td:last-child {
+    border-radius: 0;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    width: 50%;
+    padding-right: 10px;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: bold;
+    color: #9ca3af;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+  }
+
+  .teamNameCell {
+    text-align: right !important;
+    font-size: 1.1rem;
+    color: #F8B229;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    margin-bottom: 0.5rem;
+  }
+  
+  .teamName {
+    justify-content: flex-end;
+  }
 }
 
 /* Empty State */

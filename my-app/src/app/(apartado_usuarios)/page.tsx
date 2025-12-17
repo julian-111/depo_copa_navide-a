@@ -3,12 +3,7 @@ import styles from './page.module.css';
 import Button from '../../components/Button/Button';
 import { getStandings, getTopScorer, getBestDefense, getUpcomingMatches, getCurrentPhase, getMatchesByPhase, getKnockoutMatches } from '@/app/actions/tournament';
 import { Prisma } from '@prisma/client';
-import dynamic from 'next/dynamic';
-
-const TournamentBracket = dynamic(() => import('@/components/TournamentBracket/TournamentBracket'), {
-  loading: () => <div className={styles.loadingState}>Cargando eliminatorias...</div>,
-  ssr: true
-});
+import TournamentViews from '@/components/TournamentViews/TournamentViews';
 
 type TeamWithStats = Prisma.TeamGetPayload<{
   include: {
@@ -37,26 +32,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ v
   // Determine view mode (Table vs Bracket)
   const isKnockout = currentPhase && ['QUARTER_FINAL', 'SEMI_FINAL', 'FINAL'].includes(currentPhase);
   
-  let activeView = 'table';
-  if (viewParam === 'bracket') activeView = 'bracket';
-  else if (viewParam === 'table') activeView = 'table';
-  else if (isKnockout) activeView = 'bracket';
+  let initialView: 'table' | 'bracket' = 'table';
+  if (viewParam === 'bracket') initialView = 'bracket';
+  else if (viewParam === 'table') initialView = 'table';
+  else if (isKnockout) initialView = 'bracket';
 
   let knockoutMatches: MatchWithTeams[] = [];
-
-  if (activeView === 'bracket' || isKnockout) {
-    const resKnockout = await getKnockoutMatches();
-    if (resKnockout.success && resKnockout.data) knockoutMatches = resKnockout.data;
-  }
-
-  const formatPhaseName = (phase: string) => {
-    switch(phase) {
-      case 'QUARTER_FINAL': return 'Cuartos de Final';
-      case 'SEMI_FINAL': return 'Semifinales';
-      case 'FINAL': return 'Gran Final';
-      default: return phase;
-    }
-  };
+  const resKnockout = await getKnockoutMatches();
+  if (resKnockout.success && resKnockout.data) knockoutMatches = resKnockout.data;
 
   return (
     <div className={styles.container}>
@@ -74,80 +57,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ v
         </div>
       </section>
 
-      {/* Dynamic Main Section: Table or Bracket */}
+      {/* Dynamic Main Section: Table or Bracket handled by Client Component */}
       <section className={styles.section}>
-        <div className={styles.tableHeader}>
-          <h2 className={styles.sectionTitle}>
-            {activeView === 'table' ? 'Tabla de Posiciones' : 'Fase Eliminatoria'}
-          </h2>
-          <div className={styles.tabs}>
-            <Link 
-              href="/?view=table" 
-              className={`${styles.tab} ${activeView === 'table' ? styles.activeTab : ''}`}
-              scroll={false}
-            >
-              Grupos
-            </Link>
-            <Link 
-              href="/?view=bracket" 
-              className={`${styles.tab} ${activeView === 'bracket' ? styles.activeTab : ''}`}
-              scroll={false}
-            >
-              Eliminatorias
-            </Link>
-          </div>
-        </div>
-        
-        {activeView === 'table' ? (
-          <div className={styles.tableContainer}>
-            <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Equipo</th>
-                    <th>PJ</th>
-                    <th>PG</th>
-                    <th>PE</th>
-                    <th>PP</th>
-                    <th>Pts</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {standings && standings.length > 0 ? (
-                    standings.map((team: TeamWithStats, index: number) => (
-                      <tr key={team.id}>
-                        <td>{index + 1}</td>
-                        <td className={styles.teamNameCell}>
-                          <span className={styles.teamName}>{team.name}</span>
-                        </td>
-                        <td>{team.stats?.played || 0}</td>
-                        <td>{team.stats?.won || 0}</td>
-                        <td>{team.stats?.drawn || 0}</td>
-                        <td>{team.stats?.lost || 0}</td>
-                        <td className={styles.pointsCell}>{team.stats?.points || 0}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={7}>
-                        <div className={styles.emptyState}>
-                          <span className={styles.emptyIcon}>❄️</span>
-                          <h3>Aún no hay equipos registrados</h3>
-                          <p>La tabla de posiciones se actualizará automáticamente cuando comience el torneo.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : (
-          <div className={styles.bracketWrapper}>
-             <TournamentBracket matches={knockoutMatches} />
-          </div>
-        )}
+        <TournamentViews 
+          standings={standings || []} 
+          knockoutMatches={knockoutMatches} 
+          initialView={initialView} 
+        />
       </section>
 
       {/* Tournament Highlights Section */}
