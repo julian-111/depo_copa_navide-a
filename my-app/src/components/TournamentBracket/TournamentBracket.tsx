@@ -37,10 +37,24 @@ export default function TournamentBracket({ matches }: Props) {
 
   // Helper to render a match card
   const renderMatchCard = (group: MatchWithTeams[], index: number) => {
-    if (!group || group.length === 0) return null;
+    // If no group data, render placeholder
+    if (!group || group.length === 0) {
+      return (
+        <div key={`placeholder-${index}`} className={`${styles.matchCard} ${styles.placeholder}`}>
+          <div className={styles.teamRow}>
+            <span className={styles.teamName}>-</span>
+            <span className={styles.score}>-</span>
+          </div>
+          <div className={styles.teamRow}>
+            <span className={styles.teamName}>-</span>
+            <span className={styles.score}>-</span>
+          </div>
+          <div className={styles.matchInfo}>Por definir</div>
+        </div>
+      );
+    }
 
-    // Use the first match to identify teams (consistently using the one with lowest ID as "Home" for display stability if desired, 
-    // or just the first one found)
+    // Use the first match to identify teams
     const firstMatch = group[0];
     
     // Let's fix Team 1 and Team 2 based on the first match found
@@ -96,22 +110,28 @@ export default function TournamentBracket({ matches }: Props) {
     );
   };
 
+  // Helper to ensure we render the correct number of slots
+  const renderRound = (title: string, data: MatchWithTeams[][], expectedCount: number) => {
+    const slots = [];
+    for (let i = 0; i < expectedCount; i++) {
+      slots.push(data[i] || []);
+    }
+
+    return (
+      <div className={styles.round}>
+        <div className={styles.roundTitle}>{title}</div>
+        <div className={styles.roundMatches}>
+          {slots.map((group, i) => renderMatchCard(group, i))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className={styles.bracketContainer}>
-      <div className={styles.round}>
-        <div className={styles.roundTitle}>Cuartos</div>
-        {quarterGroups.length > 0 ? quarterGroups.map((g, i) => renderMatchCard(g, i)) : <div className={styles.matchInfo}>Por definir</div>}
-      </div>
-      
-      <div className={styles.round}>
-        <div className={styles.roundTitle}>Semifinal</div>
-        {semiGroups.length > 0 ? semiGroups.map((g, i) => renderMatchCard(g, i)) : <div className={styles.matchInfo}>Por definir</div>}
-      </div>
-      
-      <div className={styles.round}>
-        <div className={styles.roundTitle}>Final</div>
-        {finalGroups.length > 0 ? finalGroups.map((g, i) => renderMatchCard(g, i)) : <div className={styles.matchInfo}>Por definir</div>}
-      </div>
+      {renderRound('Cuartos', quarterGroups, 4)}
+      {renderRound('Semifinal', semiGroups, 2)}
+      {renderRound('Final', finalGroups, 1)}
     </div>
   );
 }
