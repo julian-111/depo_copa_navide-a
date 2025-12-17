@@ -23,16 +23,19 @@ type MatchWithTeams = Prisma.MatchGetPayload<{
   };
 }>;
 
-export default async function Home({ searchParams }: { searchParams: { view?: string } }) {
+export default async function Home({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const { data: standings } = await getStandings();
   const { data: topScorers } = await getTopScorer();
   const { data: bestDefenses } = await getBestDefense();
   const { data: upcomingMatches } = await getUpcomingMatches();
   const { data: currentPhase } = await getCurrentPhase();
 
+  // Await searchParams in Next.js 15+
+  const resolvedParams = await searchParams;
+  const viewParam = resolvedParams?.view;
+
   // Determine view mode (Table vs Bracket)
   const isKnockout = currentPhase && ['QUARTER_FINAL', 'SEMI_FINAL', 'FINAL'].includes(currentPhase);
-  const viewParam = searchParams?.view;
   
   let activeView = 'table';
   if (viewParam === 'bracket') activeView = 'bracket';
