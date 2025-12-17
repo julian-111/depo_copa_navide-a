@@ -74,6 +74,41 @@
   gap: 1rem;
 }
 
+.tabs {
+  display: flex;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tab {
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.tab:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.activeTab {
+  background: #F8B229;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.activeTab:hover {
+  background: #e5a01d;
+  color: #0f172a;
+}
+
 .sectionTitle {
   font-size: clamp(1.8rem, 5vw, 2.5rem);
   font-weight: 700;

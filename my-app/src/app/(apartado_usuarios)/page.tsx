@@ -1,7 +1,8 @@
 import styles from './page.module.css';
 import Button from '../../components/Button/Button';
-import { getStandings, getTopScorer, getBestDefense, getUpcomingMatches, getCurrentPhase, getMatchesByPhase } from '@/app/actions/tournament';
+import { getStandings, getTopScorer, getBestDefense, getUpcomingMatches, getCurrentPhase, getMatchesByPhase, getKnockoutMatches } from '@/app/actions/tournament';
 import { Prisma } from '@prisma/client';
+import TournamentBracket from '@/components/TournamentBracket/TournamentBracket';
 
 type TeamWithStats = Prisma.TeamGetPayload<{
   include: {
@@ -26,7 +27,13 @@ export default async function Home() {
   const showStandings = !currentPhase || currentPhase === 'GROUP';
   
   let phaseMatches: MatchWithTeams[] = [];
-  if (!showStandings && currentPhase) {
+  let knockoutMatches: MatchWithTeams[] = [];
+
+  if (!showStandings) {
+    // Si no estamos en fase de grupos, obtenemos todos los partidos de eliminatorias para el bracket
+    const resKnockout = await getKnockoutMatches();
+    if (resKnockout.success && resKnockout.data) knockoutMatches = resKnockout.data;
+  } else if (currentPhase) {
     const res = await getMatchesByPhase(currentPhase);
     if (res.success && res.data) phaseMatches = res.data;
   }
@@ -60,11 +67,27 @@ export default async function Home() {
       <section className={styles.section}>
         <div className={styles.tableHeader}>
           <h2 className={styles.sectionTitle}>
-            {showStandings ? 'Tabla de Posiciones' : formatPhaseName(currentPhase!)}
+            {activeView === 'table' ? 'Tabla de Posiciones' : 'Fase Eliminatoria'}
           </h2>
+          <div className={styles.tabs}>
+            <Link 
+              href="/?view=table" 
+              className={`${styles.tab} ${activeView === 'table' ? styles.activeTab : ''}`}
+              scroll={false}
+            >
+              Grupos
+            </Link>
+            <Link 
+              href="/?view=bracket" 
+              className={`${styles.tab} ${activeView === 'bracket' ? styles.activeTab : ''}`}
+              scroll={false}
+            >
+              Eliminatorias
+            </Link>
+          </div>
         </div>
         
-        {showStandings ? (
+        {activeView === 'table' ? (
           <div className={styles.tableContainer}>
             <div className={styles.tableWrapper}>
               <table className={styles.table}>
@@ -110,47 +133,8 @@ export default async function Home() {
             </div>
           </div>
         ) : (
-          <div className={styles.highlightsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-            {phaseMatches.length > 0 ? phaseMatches.map((match) => (
-              <div key={match.id} className={`${styles.glass} ${styles.highlightCard}`}>
-                <div style={{ padding: '1.5rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <span style={{ fontSize: '0.9rem', color: '#F8B229', fontWeight: 'bold' }}>
-                      {match.date ? new Date(match.date).toLocaleDateString() : 'TBD'}
-                    </span>
-                    <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                      {match.leg ? `Partido ${match.leg}` : ''}
-                    </span>
-                  </div>
-                  
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ textAlign: 'center', flex: 1 }}>
-                      <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.5rem' }}>{match.homeTeam.name}</div>
-                    </div>
-                    
-                    <div style={{ 
-                      fontWeight: '800', 
-                      fontSize: '1.8rem', 
-                      color: match.status === 'PLAYED' ? '#F8B229' : 'rgba(255,255,255,0.3)',
-                      background: 'rgba(0,0,0,0.2)',
-                      padding: '0.5rem 1rem',
-                      borderRadius: '8px',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {match.status === 'PLAYED' ? `${match.homeScore} - ${match.awayScore}` : 'VS'}
-                    </div>
-
-                    <div style={{ textAlign: 'center', flex: 1 }}>
-                      <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '0.5rem' }}>{match.awayTeam.name}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )) : (
-              <div className={styles.emptyState} style={{ gridColumn: '1/-1' }}>
-                <h3>Esperando cruces...</h3>
-              </div>
-            )}
+          <div className={styles.bracketWrapper}>
+             <TournamentBracket matches={knockoutMatches} />
           </div>
         )}
       </section>

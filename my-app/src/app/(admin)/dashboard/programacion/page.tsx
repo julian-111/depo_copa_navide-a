@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Button from '../../../../components/Button/Button';
 import styles from './page.module.css';
-import { getTeams, getAllScheduledMatches, scheduleMatch, deleteMatch, generateNextPhase } from '@/app/actions/tournament';
+import { getTeams, getAllScheduledMatches, scheduleMatch, deleteMatch, generateNextPhase, updateMatchSchedule } from '@/app/actions/tournament';
 
 interface Team {
   id: string;
@@ -24,6 +24,7 @@ export default function ProgramacionPage() {
   const [scheduledMatches, setScheduledMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     homeTeamId: '',
@@ -67,6 +68,44 @@ export default function ProgramacionPage() {
     }));
   };
 
+  const handleEdit = (match: Match) => {
+    setEditingMatchId(match.id);
+    
+    let dateStr = '';
+    let timeStr = '';
+    
+    if (match.date) {
+      const d = new Date(match.date);
+      // Adjust to local ISO string for input[type="date"]
+      // Using 'sv-SE' locale gives YYYY-MM-DD format
+      dateStr = d.toLocaleDateString('sv-SE');
+      // HH:MM format
+      timeStr = d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    setFormData({
+      homeTeamId: match.homeTeam.id,
+      awayTeamId: match.awayTeam.id,
+      date: dateStr,
+      time: timeStr,
+      phase: match.phase
+    });
+    
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMatchId(null);
+    setFormData({
+      homeTeamId: '',
+      awayTeamId: '',
+      date: '',
+      time: '',
+      phase: 'GROUP'
+    });
+  };
+
   const handleSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -86,25 +125,31 @@ export default function ProgramacionPage() {
       dateTime = new Date(`${formData.date}T${formData.time}`);
     }
 
-    const result = await scheduleMatch({
-      homeTeamId: formData.homeTeamId,
-      awayTeamId: formData.awayTeamId,
-      date: dateTime,
-      phase: formData.phase
-    });
+    let result;
+    
+    if (editingMatchId) {
+      result = await updateMatchSchedule({
+        matchId: editingMatchId,
+        homeTeamId: formData.homeTeamId,
+        awayTeamId: formData.awayTeamId,
+        date: dateTime,
+        phase: formData.phase
+      });
+    } else {
+      result = await scheduleMatch({
+        homeTeamId: formData.homeTeamId,
+        awayTeamId: formData.awayTeamId,
+        date: dateTime,
+        phase: formData.phase
+      });
+    }
 
     if (result.success) {
-      alert('Partido programado correctamente.');
-      setFormData({
-        homeTeamId: '',
-        awayTeamId: '',
-        date: '',
-        time: '',
-        phase: 'GROUP'
-      });
+      alert(editingMatchId ? 'Partido actualizado correctamente.' : 'Partido programado correctamente.');
+      handleCancelEdit(); // Reset form and state
       fetchData();
     } else {
-      alert(result.error || 'Error al programar el partido.');
+      alert(result.error || (editingMatchId ? 'Error al actualizar el partido.' : 'Error al programar el partido.'));
     }
   };
 
@@ -165,7 +210,7 @@ export default function ProgramacionPage() {
       <div className={styles.grid}>
         {/* Panel Izquierdo: Formulario */}
         <div className={`${styles.glassPanel} ${styles.formSection}`}>
-          <h3 className={styles.sectionTitle}>Programar Partido Manual</h3>
+          <h3 className={styles.sectionTitle}>{editingMatchId ? 'Editar Partido' : 'Programar Partido Manual'}</h3>
           <form onSubmit={handleSchedule}>
             <div className={styles.formGroup}>
               <label className={styles.label}>Fase</label>
@@ -236,9 +281,17 @@ export default function ProgramacionPage() {
               />
             </div>
 
-            <Button type="submit" variant="primary" fullWidth>
-              Programar Partido
-            </Button>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <Button type="submit" variant="primary" fullWidth>
+                {editingMatchId ? 'Actualizar Partido' : 'Programar Partido'}
+              </Button>
+              
+              {editingMatchId && (
+                <Button type="button" variant="secondary" onClick={handleCancelEdit}>
+                  Cancelar
+                </Button>
+              )}
+            </div>
           </form>
 
           <div style={{ marginTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '2rem' }}>
@@ -289,13 +342,23 @@ export default function ProgramacionPage() {
                     <div className={styles.vs}>VS</div>
                     <div className={`${styles.team} ${styles.away}`}>{match.awayTeam.name}</div>
                   </div>
-                  <button 
-                    className={styles.deleteBtn}
-                    onClick={() => handleDelete(match.id)}
-                    title="Eliminar programación"
-                  >
-                    <i className="fas fa-trash"></i> 🗑️
-                  </button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <button 
+                      className={styles.deleteBtn}
+                      onClick={() => handleEdit(match)}
+                      title="Editar programación"
+                      style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa' }}
+                    >
+                      <i className="fas fa-edit"></i> ✏️
+                    </button>
+                    <button 
+                      className={styles.deleteBtn}
+                      onClick={() => handleDelete(match.id)}
+                      title="Eliminar programación"
+                    >
+                      <i className="fas fa-trash"></i> 🗑️
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
