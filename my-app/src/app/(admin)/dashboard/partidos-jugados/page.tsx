@@ -24,6 +24,7 @@ interface Match {
 export default function PartidosJugadosPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -56,6 +57,11 @@ export default function PartidosJugadosPage() {
     loadMatches(); // Reload matches to show updated scores
   };
 
+  const filteredMatches = matches.filter(match => 
+    match.homeTeam.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    match.awayTeam.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className={styles.container}>
       <Link href="/dashboard" style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'none', display: 'inline-block', marginBottom: '1rem' }}>
@@ -67,13 +73,25 @@ export default function PartidosJugadosPage() {
         <p style={{ color: 'rgba(255,255,255,0.6)' }}>Historial y edición de resultados</p>
       </header>
 
+      <div className={styles.searchContainer}>
+        <input
+          type="text"
+          placeholder="Buscar por nombre de equipo..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className={styles.searchInput}
+        />
+      </div>
+
       {loading ? (
         <div style={{ textAlign: 'center' }}>Cargando...</div>
-      ) : matches.length === 0 ? (
-        <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)' }}>No hay partidos jugados aún.</div>
+      ) : filteredMatches.length === 0 ? (
+        <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)' }}>
+          {searchTerm ? 'No se encontraron partidos para esa búsqueda.' : 'No hay partidos jugados aún.'}
+        </div>
       ) : (
         <div className={styles.grid}>
-          {matches.map(match => (
+          {filteredMatches.map(match => (
             <div key={match.id} className={styles.matchCard}>
               <span className={styles.date}>
                 {match.date ? new Date(match.date).toLocaleDateString() : 'Fecha por definir'}

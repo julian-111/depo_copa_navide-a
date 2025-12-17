@@ -19,6 +19,35 @@
   -webkit-text-fill-color: transparent;
 }
 
+.searchContainer {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.searchInput {
+  width: 100%;
+  max-width: 400px;
+  padding: 0.8rem 1.2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.searchInput:focus {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(248, 178, 41, 0.5);
+  box-shadow: 0 0 0 4px rgba(248, 178, 41, 0.1);
+}
+
+.searchInput::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
 .grid {
   display: grid;
   gap: 1.5rem;
@@ -49,26 +78,33 @@
 }
 
 .teamName {
-  font-weight: bold;
+  flex: 1;
+  font-weight: 600;
   font-size: 1.1rem;
-  width: 150px;
-  text-align: center;
 }
 
 .score {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #F8B229;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   padding: 0.5rem 1rem;
   border-radius: 8px;
-  min-width: 80px;
-  text-align: center;
+  color: #F8B229;
+  white-space: nowrap;
 }
 
-.vs {
-  color: rgba(255,255,255,0.5);
+.date {
   font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  min-width: 100px;
+}
+
+.phase {
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
 }
 
 .actions {
@@ -76,86 +112,44 @@
   gap: 0.5rem;
 }
 
-.editBtn, .saveBtn, .cancelBtn {
+.editBtn {
+  background: rgba(255, 255, 255, 0.1);
   border: none;
+  color: white;
   padding: 0.5rem 1rem;
   border-radius: 6px;
   cursor: pointer;
-  font-weight: 600;
   transition: all 0.2s;
+  font-size: 0.9rem;
 }
 
-.editBtn {
-  background: rgba(255,255,255,0.1);
-  color: white;
-}
-.editBtn:hover { background: rgba(255,255,255,0.2); }
-
-.saveBtn {
-  background: #22c55e;
-  color: white;
-}
-.saveBtn:hover { background: #16a34a; }
-
-.cancelBtn {
-  background: #ef4444;
-  color: white;
-}
-.cancelBtn:hover { background: #dc2626; }
-
-.input {
-  width: 60px;
-  padding: 0.5rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(0,0,0,0.4);
-  color: white;
-  text-align: center;
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
-.date {
-  position: absolute;
-  top: 10px;
-  left: 15px;
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.4);
-}
-
-.phase {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  font-size: 0.8rem;
-  color: #F8B229;
-  font-weight: bold;
+.editBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 @media (max-width: 600px) {
-  .container {
-    padding: 1rem;
-  }
-
   .matchCard {
     flex-direction: column;
     text-align: center;
-    padding: 1rem;
+    gap: 1.5rem;
   }
+  
   .matchInfo {
     flex-direction: column;
     width: 100%;
     min-width: 0;
   }
+  
   .teamName {
-    width: 100%;
     text-align: center !important;
   }
+
   .actions {
     width: 100%;
   }
+
   .editBtn {
     width: 100%;
-    justify-content: center;
+    padding: 0.8rem;
   }
 }
