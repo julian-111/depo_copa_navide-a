@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import styles from './page.module.css';
 import Button from '../../components/Button/Button';
 import { getStandings, getTopScorer, getBestDefense, getUpcomingMatches, getCurrentPhase, getMatchesByPhase, getKnockoutMatches } from '@/app/actions/tournament';
@@ -17,25 +18,27 @@ type MatchWithTeams = Prisma.MatchGetPayload<{
   };
 }>;
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: { view?: string } }) {
   const { data: standings } = await getStandings();
   const { data: topScorers } = await getTopScorer();
   const { data: bestDefenses } = await getBestDefense();
   const { data: upcomingMatches } = await getUpcomingMatches();
   const { data: currentPhase } = await getCurrentPhase();
 
-  const showStandings = !currentPhase || currentPhase === 'GROUP';
+  // Determine view mode (Table vs Bracket)
+  const isKnockout = currentPhase && ['QUARTER_FINAL', 'SEMI_FINAL', 'FINAL'].includes(currentPhase);
+  const viewParam = searchParams?.view;
   
-  let phaseMatches: MatchWithTeams[] = [];
+  let activeView = 'table';
+  if (viewParam === 'bracket') activeView = 'bracket';
+  else if (viewParam === 'table') activeView = 'table';
+  else if (isKnockout) activeView = 'bracket';
+
   let knockoutMatches: MatchWithTeams[] = [];
 
-  if (!showStandings) {
-    // Si no estamos en fase de grupos, obtenemos todos los partidos de eliminatorias para el bracket
+  if (activeView === 'bracket' || isKnockout) {
     const resKnockout = await getKnockoutMatches();
     if (resKnockout.success && resKnockout.data) knockoutMatches = resKnockout.data;
-  } else if (currentPhase) {
-    const res = await getMatchesByPhase(currentPhase);
-    if (res.success && res.data) phaseMatches = res.data;
   }
 
   const formatPhaseName = (phase: string) => {
