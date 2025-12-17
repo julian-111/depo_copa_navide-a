@@ -16,11 +16,19 @@
 }
 
 .roundMatches {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
+  display: grid;
   flex: 1;
   width: 100%;
+  gap: 1rem;
+}
+
+/* Specific grid layouts for each round type would be handled by inline styles or nth-child, 
+   but since we have separate columns, we can just rely on the fact that 
+   the QF column has 4 items, SF has 2, Final has 1. 
+   We just need to ensure they distribute height evenly.
+*/
+.roundMatches > div {
+  align-self: center;
 }
 
 .roundTitle {

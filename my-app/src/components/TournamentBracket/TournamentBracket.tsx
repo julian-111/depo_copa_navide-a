@@ -120,7 +120,10 @@ export default function TournamentBracket({ matches }: Props) {
     return (
       <div className={styles.round}>
         <div className={styles.roundTitle}>{title}</div>
-        <div className={styles.roundMatches}>
+        <div 
+          className={styles.roundMatches}
+          style={{ gridTemplateRows: `repeat(${expectedCount}, 1fr)` }}
+        >
           {slots.map((group, i) => renderMatchCard(group, i))}
         </div>
       </div>
