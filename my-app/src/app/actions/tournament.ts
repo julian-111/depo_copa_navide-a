@@ -121,6 +121,8 @@ export async function getStandings() {
       },
     });
 
+    console.log('getStandings teams count:', teams.length);
+
     // Sort by Points > Goal Diff > Goals For
     type TeamWithStats = Prisma.TeamGetPayload<{ include: { stats: true } }>;
     
