@@ -3,7 +3,12 @@ import styles from './page.module.css';
 import Button from '../../components/Button/Button';
 import { getStandings, getTopScorer, getBestDefense, getUpcomingMatches, getCurrentPhase, getMatchesByPhase, getKnockoutMatches } from '@/app/actions/tournament';
 import { Prisma } from '@prisma/client';
-import TournamentBracket from '@/components/TournamentBracket/TournamentBracket';
+import dynamic from 'next/dynamic';
+
+const TournamentBracket = dynamic(() => import('@/components/TournamentBracket/TournamentBracket'), {
+  loading: () => <div className={styles.loadingState}>Cargando eliminatorias...</div>,
+  ssr: true
+});
 
 type TeamWithStats = Prisma.TeamGetPayload<{
   include: {

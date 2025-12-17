@@ -269,6 +269,13 @@
   margin-bottom: 1rem;
 }
 
+.loadingState {
+  text-align: center;
+  color: #9ca3af;
+  padding: 2rem;
+  font-style: italic;
+}
+
 .highlightStat {
   font-size: 1.1rem;
   font-weight: 700;
